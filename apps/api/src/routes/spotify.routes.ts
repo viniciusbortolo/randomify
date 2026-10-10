@@ -83,6 +83,42 @@ interface SpotifyTopTracksResponse {
   }>;
 }
 
+async function fetchArtistAlbums(
+  token: string,
+  artistId: string,
+  includeGroups: string
+): Promise<SpotifyAlbumItem[]> {
+  // A API do Spotify restringe /artists/{id}/albums a no máximo 10 itens por requisição
+  const initialData = await spotifyFetch<{ items: SpotifyAlbumItem[]; total?: number }>(
+    token,
+    `/artists/${artistId}/albums?include_groups=${includeGroups}&limit=10&offset=0`
+  );
+
+  const items = initialData.items || [];
+  const total = initialData.total ?? items.length;
+
+  // Se o artista tiver mais de 10 lançamentos, sorteamos um offset aleatório para cobrir todas as épocas
+  if (total > 10) {
+    const maxOffset = Math.max(0, total - 10);
+    const randomOffset = Math.floor(Math.random() * (maxOffset + 1));
+    if (randomOffset > 0) {
+      try {
+        const offsetData = await spotifyFetch<{ items: SpotifyAlbumItem[] }>(
+          token,
+          `/artists/${artistId}/albums?include_groups=${includeGroups}&limit=10&offset=${randomOffset}`
+        );
+        if (offsetData.items && offsetData.items.length > 0) {
+          return offsetData.items;
+        }
+      } catch {
+        // Fallback para items iniciais
+      }
+    }
+  }
+
+  return items;
+}
+
 export async function spotifyRoutes(app: FastifyInstance) {
   // Buscar artistas que o usuário segue no Spotify
   app.get('/spotify/followed-artists', { preHandler: [authenticate] }, async (request, reply) => {
@@ -165,19 +201,16 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     if (type === 'track') {
       // Para sortear faixa: buscamos álbuns e singles do artista para explorar o catálogo completo
-      const albumsData = await spotifyFetch<{ items: SpotifyAlbumItem[] }>(
-        token,
-        `/artists/${selectedArtistId}/albums?include_groups=album,single&limit=50`
-      );
+      const albums = await fetchArtistAlbums(token, selectedArtistId, 'album,single');
 
       let chosenTrack: any = null;
 
-      if (albumsData.items.length > 0) {
+      if (albums.length > 0) {
         // Escolhe um álbum/single aleatório
-        const randomAlbum = albumsData.items[Math.floor(Math.random() * albumsData.items.length)];
+        const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
         const tracksData = await spotifyFetch<SpotifyAlbumTracksResponse>(
           token,
-          `/albums/${randomAlbum.id}/tracks?limit=50`
+          `/albums/${randomAlbum.id}/tracks?limit=20`
         );
 
         if (tracksData.items.length > 0) {
@@ -245,16 +278,13 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     if (type === 'album') {
       // Buscar apenas álbuns completos
-      const albumsData = await spotifyFetch<{ items: SpotifyAlbumItem[] }>(
-        token,
-        `/artists/${selectedArtistId}/albums?include_groups=album&limit=50`
-      );
+      const albums = await fetchArtistAlbums(token, selectedArtistId, 'album');
 
-      if (albumsData.items.length === 0) {
+      if (albums.length === 0) {
         return reply.status(404).send({ error: `Nenhum álbum completo encontrado para o artista ${selectedArtist.name}.` });
       }
 
-      const album = albumsData.items[Math.floor(Math.random() * albumsData.items.length)];
+      const album = albums[Math.floor(Math.random() * albums.length)];
 
       const chosenAlbum = {
         id: album.id,
@@ -290,16 +320,13 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     if (type === 'single') {
       // Buscar apenas singles e EPs
-      const singlesData = await spotifyFetch<{ items: SpotifyAlbumItem[] }>(
-        token,
-        `/artists/${selectedArtistId}/albums?include_groups=single&limit=50`
-      );
+      const singles = await fetchArtistAlbums(token, selectedArtistId, 'single');
 
-      if (singlesData.items.length === 0) {
+      if (singles.length === 0) {
         return reply.status(404).send({ error: `Nenhum single/EP encontrado para o artista ${selectedArtist.name}.` });
       }
 
-      const single = singlesData.items[Math.floor(Math.random() * singlesData.items.length)];
+      const single = singles[Math.floor(Math.random() * singles.length)];
 
       const chosenSingle = {
         id: single.id,
