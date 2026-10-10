@@ -58,7 +58,7 @@ randomify/
    - **App description:** `Spotify music randomizer`
    - **Redirect URI:** adicione exatamente:
      ```
-     http://localhost:3333/auth/callback
+     http://127.0.0.1:3333/auth/callback
      ```
    - Em **Which API/SDKs are you planning to use?**, selecione **Web API**.
    - Aceite os termos e salve.
@@ -81,7 +81,7 @@ JWT_SECRET="randomify_super_secret_jwt_key_1234567890_change_in_prod"
 # Suas credenciais do Spotify:
 SPOTIFY_CLIENT_ID="SEU_CLIENT_ID_AQUI"
 SPOTIFY_CLIENT_SECRET="SEU_CLIENT_SECRET_AQUI"
-SPOTIFY_REDIRECT_URI="http://localhost:3333/auth/callback"
+SPOTIFY_REDIRECT_URI="http://127.0.0.1:3333/auth/callback"
 ```
 
 ---

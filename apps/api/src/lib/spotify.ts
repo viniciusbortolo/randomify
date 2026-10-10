@@ -2,7 +2,7 @@ import { prisma } from './prisma.js';
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '';
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
-const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://localhost:3333/auth/callback';
+const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3333/auth/callback';
 
 export function getSpotifyAuthUrl(): string {
   const scopes = [

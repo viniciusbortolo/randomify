@@ -31,7 +31,11 @@ app.setSerializerCompiler(serializerCompiler);
 
 // CORS
 await app.register(cors, {
-  origin: [process.env.CLIENT_URL || 'http://localhost:3000'],
+  origin: [
+    process.env.CLIENT_URL || 'http://localhost:3000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 });
