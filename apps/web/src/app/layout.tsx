@@ -14,8 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="dark">
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-emerald-500 selection:text-black">
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
+      <body
+        className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-emerald-500 selection:text-black"
+        suppressHydrationWarning
+      >
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>

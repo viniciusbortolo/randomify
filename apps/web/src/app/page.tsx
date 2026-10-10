@@ -9,11 +9,11 @@ import { RandomizeResult } from '@/components/RandomizeResult';
 import { HistoryModal } from '@/components/HistoryModal';
 import { PresetsModal } from '@/components/PresetsModal';
 import { Button } from '@/components/ui/button';
-import { Dices, Music2, Disc3, Radio, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Dices, Music2, Disc3, Radio, Sparkles, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import type { Artist, RandomizeType, RandomizeResponse } from '@randomify/shared';
 
 export default function Home() {
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const { isAuthenticated, isLoading, login, authError, clearAuthError } = useAuth();
 
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
   const [selectedType, setSelectedType] = useState<RandomizeType>('track');
@@ -51,6 +51,21 @@ export default function Home() {
       />
 
       <main className="flex-1 container mx-auto px-4 sm:px-6 py-8 max-w-5xl">
+        {authError && (
+          <div className="mb-6 p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-200 text-sm flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
+              <span>{authError}</span>
+            </div>
+            <button
+              onClick={clearAuthError}
+              className="text-red-400 hover:text-white p-1 rounded-lg hover:bg-red-900/40 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
             <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />

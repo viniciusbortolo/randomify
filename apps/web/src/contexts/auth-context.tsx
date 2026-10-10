@@ -8,6 +8,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authError: string | null;
+  clearAuthError: () => void;
   login: () => void;
   logout: () => Promise<void>;
   refetchUser: () => Promise<void>;
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const fetchCurrentUser = async () => {
     try {
@@ -36,13 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Verifica se veio um token na URL após o redirect do Spotify OAuth
+    // Verifica se veio um token ou erro na URL após o redirect do Spotify OAuth
     const params = new URLSearchParams(window.location.search);
     const token = params.get('auth_token');
+    const errorParam = params.get('auth_error');
 
     if (token) {
       localStorage.setItem('randomify_token', token);
       params.delete('auth_token');
+    }
+
+    if (errorParam) {
+      setAuthError(decodeURIComponent(errorParam));
+      params.delete('auth_error');
+    }
+
+    if (token || errorParam) {
       const newQuery = params.toString() ? `?${params.toString()}` : '';
       window.history.replaceState({}, '', `${window.location.pathname}${newQuery}`);
     }
@@ -67,12 +79,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const clearAuthError = () => {
+    setAuthError(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
         isAuthenticated: !!user,
+        authError,
+        clearAuthError,
         login,
         logout,
         refetchUser: fetchCurrentUser,
