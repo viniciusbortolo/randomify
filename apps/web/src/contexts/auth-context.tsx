@@ -1,0 +1,92 @@
+'use client';
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api';
+import type { User } from '@randomify/shared';
+
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: () => void;
+  logout: () => Promise<void>;
+  refetchUser: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const data = await apiFetch<User>('/auth/me');
+      setUser(data);
+    } catch {
+      setUser(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('randomify_token');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Verifica se veio um token na URL após o redirect do Spotify OAuth
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('auth_token');
+
+    if (token) {
+      localStorage.setItem('randomify_token', token);
+      params.delete('auth_token');
+      const newQuery = params.toString() ? `?${params.toString()}` : '';
+      window.history.replaceState({}, '', `${window.location.pathname}${newQuery}`);
+    }
+
+    fetchCurrentUser();
+  }, []);
+
+  const login = () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+    window.location.href = `${apiUrl}/auth/login`;
+  };
+
+  const logout = async () => {
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignora erro de rede no logout
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('randomify_token');
+    }
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+        refetchUser: fetchCurrentUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
+}

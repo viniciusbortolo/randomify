@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String        @id @default(uuid())
+  spotifyId      String        @unique
+  displayName    String?
+  email          String?
+  avatarUrl      String?
+  accessToken    String
+  refreshToken   String
+  tokenExpiresAt DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  presets        Preset[]
+  histories      DrawHistory[]
+}
+
+model Preset {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artists   Json     // Array de objetos { id, name, imageUrl }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DrawHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // 'track' | 'album' | 'single'
+  itemName    String
+  itemUri     String
+  externalUrl String
+  artistNames String[]
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+}
