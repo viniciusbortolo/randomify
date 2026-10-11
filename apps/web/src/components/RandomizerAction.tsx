@@ -165,7 +165,7 @@ export function RandomizerAction({
           <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-amber-300 bg-amber-950/40 border border-amber-500/30 px-3.5 py-2 rounded-xl animate-in fade-in">
             <Clock className="h-3.5 w-3.5 text-amber-400 shrink-0" />
             <span>
-              Daily limit reached for {selectedType === 'single' ? 'singles / EPs' : `${selectedType}s`} (3/3 used today). Resets at midnight UTC.
+              Daily limit reached for {selectedType === 'single' ? 'singles / EPs' : `${selectedType}s`} (3/3 used today). Resets at midnight.
             </span>
           </div>
         )}

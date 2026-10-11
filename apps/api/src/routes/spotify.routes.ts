@@ -124,15 +124,65 @@ async function fetchArtistAlbums(
   return items;
 }
 
-function getUtcDayBounds(): { startOfDay: Date; endOfDay: Date } {
+function getZonedDayBounds(timeZone: string = 'UTC'): { startOfDay: Date; endOfDay: Date } {
+  let validTz = 'UTC';
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone });
+    validTz = timeZone;
+  } catch {
+    validTz = 'UTC';
+  }
+
   const now = new Date();
-  const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-  const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: validTz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const localDateStr = formatter.format(now);
+  const [year, month, day] = localDateStr.split('-').map(Number);
+
+  function getZonedDate(y: number, m: number, d: number, h = 0, min = 0, s = 0): Date {
+    let utcMs = Date.UTC(y, m - 1, d, h, min, s);
+    for (let i = 0; i < 3; i++) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: validTz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).formatToParts(new Date(utcMs));
+
+      const getVal = (type: string) => parts.find((p) => p.type === type)?.value || '00';
+      const actualY = Number(getVal('year'));
+      const actualM = Number(getVal('month'));
+      const actualD = Number(getVal('day'));
+      let actualH = Number(getVal('hour'));
+      if (actualH === 24) actualH = 0;
+      const actualMin = Number(getVal('minute'));
+      const actualS = Number(getVal('second'));
+
+      const targetDate = new Date(Date.UTC(y, m - 1, d, h, min, s));
+      const actualDate = new Date(Date.UTC(actualY, actualM - 1, actualD, actualH, actualMin, actualS));
+      const diff = targetDate.getTime() - actualDate.getTime();
+      if (diff === 0) break;
+      utcMs += diff;
+    }
+    return new Date(utcMs);
+  }
+
+  const startOfDay = getZonedDate(year, month, day, 0, 0, 0);
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+
   return { startOfDay, endOfDay };
 }
 
-async function getUserSpinLimits(userId: string): Promise<SpinLimitsResponse> {
-  const { startOfDay, endOfDay } = getUtcDayBounds();
+async function getUserSpinLimits(userId: string, timeZone: string = 'UTC'): Promise<SpinLimitsResponse> {
+  const { startOfDay, endOfDay } = getZonedDayBounds(timeZone);
 
   const spinRecords = await prisma.spinUsage.findMany({
     where: {
@@ -325,7 +375,8 @@ export async function spotifyRoutes(app: FastifyInstance) {
   // Consultar limites diários de sorteios
   app.get('/spotify/spin-limits', { preHandler: [authenticate] }, async (request, reply) => {
     const userId = request.user!.id;
-    const spinLimits = await getUserSpinLimits(userId);
+    const timeZone = (request.headers['x-timezone'] as string) || (request.query as any)?.timezone || 'UTC';
+    const spinLimits = await getUserSpinLimits(userId, timeZone);
     return reply.send(spinLimits);
   });
 
@@ -342,9 +393,10 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     const { artistIds, type } = parsed.data;
     const userId = request.user!.id;
+    const timeZone = (request.headers['x-timezone'] as string) || (request.query as any)?.timezone || 'UTC';
 
     // Verificar limite diário de sorteios para a categoria (máximo 3 por categoria por dia)
-    const currentLimits = await getUserSpinLimits(userId);
+    const currentLimits = await getUserSpinLimits(userId, timeZone);
     const categoryLimit = currentLimits[type];
 
     if (categoryLimit.remaining <= 0) {

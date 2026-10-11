@@ -13,6 +13,17 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
     headers.set('Authorization', `Bearer ${token}`);
   }
 
+  if (!headers.has('x-timezone') && typeof window !== 'undefined') {
+    try {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (timeZone) {
+        headers.set('x-timezone', timeZone);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
