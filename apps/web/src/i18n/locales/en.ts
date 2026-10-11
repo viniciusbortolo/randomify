@@ -23,11 +23,18 @@ export const en: Translations = {
   header: {
     subtitle: 'Spotify track, album, and single randomizer',
     presets: 'My Presets',
+    presetsDesc: 'Manage saved artist groups',
     history: 'History',
+    historyDesc: 'View previous randomizer draws',
     login: 'Log in with Spotify',
     logout: 'Log out',
     language: 'Language',
     toggleLanguage: 'Switch language (PT / EN)',
+    menu: 'Menu',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    connectedAs: 'Connected to Spotify',
+    navigation: 'Navigation',
   },
   hero: {
     badge: 'Smart random music discovery connected to Spotify',

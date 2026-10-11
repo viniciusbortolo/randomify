@@ -23,11 +23,18 @@ export interface Translations {
   header: {
     subtitle: string;
     presets: string;
+    presetsDesc: string;
     history: string;
+    historyDesc: string;
     login: string;
     logout: string;
     language: string;
     toggleLanguage: string;
+    menu: string;
+    openMenu: string;
+    closeMenu: string;
+    connectedAs: string;
+    navigation: string;
   };
   hero: {
     badge: string;
