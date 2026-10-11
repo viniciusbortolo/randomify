@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Search, Plus, X, BookmarkPlus, Check, Sparkles, Loader2, Users, ClipboardPaste } from 'lucide-react';
+import { Search, Plus, X, BookmarkPlus, Check, Sparkles, Loader2, Users, ClipboardPaste, Filter } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -50,6 +50,36 @@ export function ArtistSelection({
       a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     );
   }, [followedArtists]);
+
+  // Genre filter state
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+
+  // Available genres aggregated from followed artists
+  const availableGenres = useMemo(() => {
+    const genreMap = new Map<string, number>();
+    for (const artist of followedArtists) {
+      if (artist.genres) {
+        for (const genre of artist.genres) {
+          const formatted = genre.trim().toLowerCase();
+          if (formatted) {
+            genreMap.set(formatted, (genreMap.get(formatted) || 0) + 1);
+          }
+        }
+      }
+    }
+    return Array.from(genreMap.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([name, count]) => ({ name, count }));
+  }, [followedArtists]);
+
+  // Filter sorted followed artists by selected genre
+  const displayedFollowedArtists = useMemo(() => {
+    if (!selectedGenre) return sortedFollowedArtists;
+    const target = selectedGenre.toLowerCase();
+    return sortedFollowedArtists.filter((artist) =>
+      artist.genres?.some((g) => g.toLowerCase() === target)
+    );
+  }, [sortedFollowedArtists, selectedGenre]);
 
   // Search artists by name
   const { data: searchResults = [], isFetching: isSearching } = useQuery<Artist[]>({
@@ -339,28 +369,74 @@ export function ArtistSelection({
             </p>
           </div>
 
-          {sortedFollowedArtists.length > 0 && (
+          {displayedFollowedArtists.length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                const allSelected = sortedFollowedArtists.every((a) => isSelected(a.id));
+                const allSelected = displayedFollowedArtists.every((a) => isSelected(a.id));
                 if (allSelected) {
-                  onClearSelected();
+                  const idsToDeselect = new Set(displayedFollowedArtists.map((a) => a.id));
+                  onSelectMultiple(selectedArtists.filter((a) => !idsToDeselect.has(a.id)));
                 } else {
-                  onSelectMultiple(sortedFollowedArtists);
+                  const merged = new Map(selectedArtists.map((a) => [a.id, a]));
+                  for (const a of displayedFollowedArtists) {
+                    merged.set(a.id, a);
+                  }
+                  onSelectMultiple(Array.from(merged.values()));
                 }
               }}
               className="text-xs"
             >
-              {sortedFollowedArtists.every((a) => isSelected(a.id))
-                ? 'Deselect all'
-                : 'Select all'}
+              {displayedFollowedArtists.every((a) => isSelected(a.id))
+                ? selectedGenre ? `Deselect all (${selectedGenre})` : 'Deselect all'
+                : selectedGenre ? `Select all (${selectedGenre})` : 'Select all'}
             </Button>
           )}
         </CardHeader>
 
         <CardContent>
+          {/* Genre filter pills */}
+          {!loadingFollowed && availableGenres.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-3 text-xs">
+              <span className="text-[11px] font-medium text-zinc-500 shrink-0 mr-1 flex items-center gap-1">
+                <Filter className="h-3 w-3" />
+                Genre:
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedGenre(null)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                  selectedGenre === null
+                    ? 'bg-[#1DB954] text-black font-semibold shadow-sm shadow-emerald-500/20'
+                    : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                }`}
+              >
+                All ({sortedFollowedArtists.length})
+              </button>
+              {availableGenres.map(({ name, count }) => {
+                const isCurrent = selectedGenre === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setSelectedGenre(isCurrent ? null : name)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 capitalize ${
+                      isCurrent
+                        ? 'bg-[#1DB954] text-black font-semibold shadow-sm shadow-emerald-500/20'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                    }`}
+                  >
+                    <span>{name}</span>
+                    <span className={`text-[10px] ${isCurrent ? 'text-black/70 font-bold' : 'text-zinc-500'}`}>
+                      ({count})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {loadingFollowed ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {Array.from({ length: 10 }).map((_, i) => (
@@ -371,9 +447,20 @@ export function ArtistSelection({
             <div className="py-6 text-center text-xs text-zinc-500">
               No followed artists found on your Spotify account. Use the search above to add any artist!
             </div>
+          ) : displayedFollowedArtists.length === 0 ? (
+            <div className="py-6 text-center text-xs text-zinc-500">
+              No artists found for genre &ldquo;{selectedGenre}&rdquo;.
+              <button
+                type="button"
+                onClick={() => setSelectedGenre(null)}
+                className="ml-2 text-emerald-400 hover:underline cursor-pointer"
+              >
+                Clear filter
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-72 overflow-y-auto pr-1">
-              {sortedFollowedArtists.map((artist) => {
+              {displayedFollowedArtists.map((artist) => {
                 const selected = isSelected(artist.id);
                 return (
                   <button
@@ -399,6 +486,11 @@ export function ArtistSelection({
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold truncate">{artist.name}</p>
+                      {artist.genres && artist.genres.length > 0 && (
+                        <p className="text-[10px] text-zinc-500 truncate capitalize">
+                          {artist.genres.slice(0, 2).join(', ')}
+                        </p>
+                      )}
                     </div>
                     <div className="shrink-0">
                       {selected ? (
