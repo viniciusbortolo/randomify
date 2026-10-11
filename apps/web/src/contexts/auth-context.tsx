@@ -50,7 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (errorParam) {
-      setAuthError(decodeURIComponent(errorParam));
+      const decoded = decodeURIComponent(errorParam);
+      queueMicrotask(() => {
+        setAuthError(decoded);
+      });
       params.delete('auth_error');
     }
 
@@ -59,7 +62,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.history.replaceState({}, '', `${window.location.pathname}${newQuery}`);
     }
 
-    fetchCurrentUser();
+    let isMounted = true;
+    void (async () => {
+      try {
+        const data = await apiFetch<User>('/auth/me');
+        if (isMounted) setUser(data);
+      } catch {
+        if (isMounted) {
+          setUser(null);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('randomify_token');
+          }
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = () => {

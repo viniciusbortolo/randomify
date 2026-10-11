@@ -1,7 +1,13 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { QueryProvider } from '@/providers/query-provider';
 import { AuthProvider } from '@/contexts/auth-context';
+import { LanguageProvider } from '@/contexts/language-context';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'Randomify - Spotify Music Randomizer',
@@ -28,7 +34,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <LanguageProvider>{children}</LanguageProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

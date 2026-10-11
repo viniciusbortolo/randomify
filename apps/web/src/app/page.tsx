@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import { apiFetch } from '@/lib/api';
 import { Header } from '@/components/Header';
 import { ArtistSelection } from '@/components/ArtistSelection';
@@ -16,6 +17,7 @@ import type { Artist, RandomizeType, RandomizeResponse, SpinLimitsResponse } fro
 
 export default function Home() {
   const { isAuthenticated, isLoading, login, authError, clearAuthError } = useAuth();
+  const { t } = useLanguage();
 
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
   const [selectedType, setSelectedType] = useState<RandomizeType>('track');
@@ -58,11 +60,11 @@ export default function Home() {
         onOpenPresets={() => setIsPresetsOpen(true)}
       />
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 py-8 max-w-5xl">
+      <main className="flex-1 container mx-auto px-3.5 sm:px-6 py-4 sm:py-8 max-w-5xl">
         {authError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-200 text-sm flex items-center justify-between animate-in fade-in">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-200 text-xs sm:text-sm flex items-center justify-between animate-in fade-in">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 shrink-0" />
               <span>{authError}</span>
             </div>
             <button
@@ -75,25 +77,24 @@ export default function Home() {
         )}
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-            <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-            <p className="text-sm text-zinc-400">Loading Randomify...</p>
+          <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] space-y-4">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+            <p className="text-xs sm:text-sm text-zinc-400">{t.common.loading}</p>
           </div>
         ) : !isAuthenticated ? (
           /* Hero Section for unauthenticated visitors */
-          <div className="py-12 sm:py-20 flex flex-col items-center text-center space-y-8 animate-in fade-in duration-500">
+          <div className="py-8 sm:py-16 flex flex-col items-center text-center space-y-6 sm:space-y-8 animate-in fade-in duration-500">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
               <Dices className="h-3.5 w-3.5" />
-              Smart random music discovery connected to Spotify
+              {t.hero.badge}
             </div>
 
-            <div className="space-y-4 max-w-2xl">
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-                Looking for a random song from your favorite artist?
+            <div className="space-y-3 sm:space-y-4 max-w-2xl">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight">
+                {t.hero.title}
               </h1>
-              <p className="text-base sm:text-lg text-zinc-400">
-                Choose one or multiple artists and let Randomify pick a surprise song,
-                a full studio album, or a single/EP directly from Spotify.
+              <p className="text-sm sm:text-base md:text-lg text-zinc-400 px-2 sm:px-0">
+                {t.hero.description}
               </p>
             </div>
 
@@ -101,47 +102,47 @@ export default function Home() {
               variant="spotify"
               size="lg"
               onClick={login}
-              className="h-14 px-8 text-base font-bold shadow-2xl shadow-[#1DB954]/30"
+              className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold shadow-2xl shadow-[#1DB954]/30 w-full sm:w-auto"
             >
-              Connect with Spotify to Get Started
+              {t.hero.connectButton}
             </Button>
 
             {/* Feature Highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-12 w-full max-w-3xl text-left">
-              <div className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
-                  <Music2 className="h-5 w-5" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-6 sm:pt-12 w-full max-w-3xl text-left">
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
+                  <Music2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Tracks & Albums</h3>
+                <h3 className="font-bold text-white text-xs sm:text-sm">{t.hero.features.tracksAlbums.title}</h3>
                 <p className="text-xs text-zinc-400">
-                  Draw individual songs, full studio albums, or short releases (EPs/singles).
+                  {t.hero.features.tracksAlbums.desc}
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
-                  <Dices className="h-5 w-5" />
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
+                  <Dices className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Catalog & Followed</h3>
+                <h3 className="font-bold text-white text-xs sm:text-sm">{t.hero.features.catalogFollowed.title}</h3>
                 <p className="text-xs text-zinc-400">
-                  Instantly access artists you follow on Spotify or search any artist worldwide.
+                  {t.hero.features.catalogFollowed.desc}
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
-                  <CheckCircle2 className="h-5 w-5" />
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Presets & History</h3>
+                <h3 className="font-bold text-white text-xs sm:text-sm">{t.hero.features.presetsHistory.title}</h3>
                 <p className="text-xs text-zinc-400">
-                  Save custom artist groups in PostgreSQL and review past randomized draws anytime.
+                  {t.hero.features.presetsHistory.desc}
                 </p>
               </div>
             </div>
           </div>
         ) : (
           /* Main Application (Logged in) */
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
             {/* Randomizer Control Section */}
             <div className="space-y-6">
               <RandomizerAction

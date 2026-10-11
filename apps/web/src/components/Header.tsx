@@ -1,8 +1,9 @@
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import { Button } from './ui/button';
-import { Dices, LogIn, LogOut, History, Bookmark } from 'lucide-react';
+import { LogOut, History, Bookmark } from 'lucide-react';
 
 interface HeaderProps {
   onOpenHistory: () => void;
@@ -11,26 +12,27 @@ interface HeaderProps {
 
 export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
   const { user, isAuthenticated, login, logout, isLoading } = useAuth();
+  const { locale, toggleLocale, t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+      <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3.5 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1DB954] text-black shadow-lg shadow-[#1DB954]/25 transition-transform hover:scale-105"
+            className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-[#1DB954] text-black shadow-lg shadow-[#1DB954]/25 shrink-0"
             suppressHydrationWarning
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth={2.2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="lucide lucide-dices h-6 w-6 stroke-[2.2]"
+              className="lucide lucide-dices h-5 w-5 sm:h-6 sm:w-6 stroke-[2.2]"
               suppressHydrationWarning
             >
               <rect width="12" height="12" x="2" y="10" rx="2" ry="2" />
@@ -41,58 +43,94 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
               <path d="M18 9h.01" />
             </svg>
           </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-              Randomify
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+              <span>Randomify</span>
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
                 Spotify
               </span>
             </h1>
             <p className="text-xs text-zinc-400 hidden sm:block">
-              Spotify track, album, and single randomizer
+              {t.header.subtitle}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Language Switcher */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleLocale}
+            title={t.header.toggleLanguage}
+            className="h-8 px-2 sm:px-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-xs font-semibold text-zinc-200 hover:text-white transition-all flex items-center gap-1 cursor-pointer"
+            suppressHydrationWarning
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width={16}
+              height={16}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-globe h-3.5 w-3.5 text-emerald-400 shrink-0"
+              suppressHydrationWarning
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+              <path d="M2 12h20" />
+            </svg>
+            <span className="text-[11px] font-bold" suppressHydrationWarning>
+              {locale === 'pt-BR' ? 'PT' : 'EN'}
+            </span>
+            <span className="text-xs hidden sm:inline" suppressHydrationWarning>
+              {locale === 'pt-BR' ? '🇧🇷' : '🇺🇸'}
+            </span>
+          </Button>
+
           {isAuthenticated && (
             <>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onOpenPresets}
-                className="gap-2 text-zinc-300 hover:text-white"
+                title={t.header.presets}
+                className="h-8 w-8 p-0 sm:w-auto sm:px-3 gap-1.5 text-zinc-300 hover:text-white"
               >
-                <Bookmark className="h-4 w-4" />
-                <span className="hidden sm:inline">My Presets</span>
+                <Bookmark className="h-4 w-4 shrink-0 text-emerald-400 sm:text-zinc-300" />
+                <span className="hidden sm:inline">{t.header.presets}</span>
               </Button>
 
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onOpenHistory}
-                className="gap-2 text-zinc-300 hover:text-white"
+                title={t.header.history}
+                className="h-8 w-8 p-0 sm:w-auto sm:px-3 gap-1.5 text-zinc-300 hover:text-white"
               >
-                <History className="h-4 w-4" />
-                <span className="hidden sm:inline">History</span>
+                <History className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">{t.header.history}</span>
               </Button>
             </>
           )}
 
           {isLoading ? (
-            <div className="h-9 w-24 animate-pulse rounded-full bg-zinc-800" />
+            <div className="h-8 w-20 animate-pulse rounded-full bg-zinc-800" />
           ) : isAuthenticated && user ? (
-            <div className="flex items-center gap-3 pl-2 border-l border-zinc-800">
+            <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-zinc-800">
               <div className="flex items-center gap-2">
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatarUrl}
                     alt={user.displayName || 'Avatar'}
-                    className="h-8 w-8 rounded-full border border-emerald-500/40 object-cover"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border border-emerald-500/40 object-cover"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-emerald-400">
+                  <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-emerald-400">
                     {user.displayName?.charAt(0) || 'U'}
                   </div>
                 )}
@@ -104,16 +142,38 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
                 variant="ghost"
                 size="icon"
                 onClick={logout}
-                title="Log out"
-                className="h-8 w-8 text-zinc-400 hover:text-red-400"
+                title={t.header.logout}
+                className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-red-400"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           ) : (
-            <Button variant="spotify" size="sm" onClick={login} className="gap-2">
-              <LogIn className="h-4 w-4" />
-              Log in with Spotify
+            <Button
+              variant="spotify"
+              size="sm"
+              onClick={login}
+              className="h-8 sm:h-9 px-3 sm:px-4 gap-1.5 sm:gap-2 text-xs sm:text-sm"
+              suppressHydrationWarning
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-log-in h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
+                suppressHydrationWarning
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" x2="3" y1="12" y2="12" />
+              </svg>
+              <span>{t.header.login}</span>
             </Button>
           )}
         </div>

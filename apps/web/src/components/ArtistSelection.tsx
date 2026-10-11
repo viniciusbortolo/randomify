@@ -11,12 +11,12 @@ import { Input } from './ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { PasteListModal } from './PasteListModal';
 import { z } from 'zod';
-import { CreatePresetSchema, type CreatePresetInput, type Artist, type Preset } from '@randomify/shared';
+import type { CreatePresetInput, Artist, Preset } from '@randomify/shared';
+import { useLanguage } from '@/contexts/language-context';
 
-const SavePresetFormSchema = z.object({
-  name: z.string().trim().min(1, 'Preset name is required.').max(50, 'Preset name is too long.'),
-});
-type SavePresetFormInput = z.infer<typeof SavePresetFormSchema>;
+type SavePresetFormInput = {
+  name: string;
+};
 
 interface ArtistSelectionProps {
   selectedArtists: Artist[];
@@ -32,6 +32,7 @@ export function ArtistSelection({
   onSelectMultiple,
 }: ArtistSelectionProps) {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSavingPreset, setIsSavingPreset] = useState(false);
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
@@ -100,6 +101,18 @@ export function ArtistSelection({
     queryFn: () => apiFetch<Preset[]>('/presets'),
   });
 
+  const savePresetSchema = useMemo(
+    () =>
+      z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, t.artistSelection.presetErrorRequired)
+          .max(50, t.artistSelection.presetErrorTooLong),
+      }),
+    [t]
+  );
+
   // Save preset form with react-hook-form and zod
   const {
     register,
@@ -107,7 +120,7 @@ export function ArtistSelection({
     reset,
     formState: { errors, isSubmitting },
   } = useForm<SavePresetFormInput>({
-    resolver: zodResolver(SavePresetFormSchema),
+    resolver: zodResolver(savePresetSchema),
     defaultValues: {
       name: '',
     },
@@ -141,26 +154,26 @@ export function ArtistSelection({
     <div className="space-y-6">
       {/* Selected Artists Bar */}
       <Card className="border-emerald-500/20 bg-zinc-900/80">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-emerald-400" />
-              Selected Artists ({selectedArtists.length})
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
+              {t.artistSelection.title} ({selectedArtists.length})
             </CardTitle>
-            <p className="text-xs text-zinc-400 mt-1">
-              Randomization will pick from these selected artists
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {t.artistSelection.subtitle}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsPasteModalOpen(true)}
-              className="gap-1.5 text-xs border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/40"
+              className="gap-1.5 text-xs h-8 border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/40"
             >
               <ClipboardPaste className="h-3.5 w-3.5" />
-              Paste List
+              {t.artistSelection.pasteList}
             </Button>
 
             {selectedArtists.length > 0 && (
@@ -169,18 +182,18 @@ export function ArtistSelection({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsSavingPreset(!isSavingPreset)}
-                  className="gap-1.5 text-xs text-zinc-300 hover:text-white"
+                  className="gap-1.5 text-xs h-8 text-zinc-300 hover:text-white"
                 >
                   <BookmarkPlus className="h-3.5 w-3.5 text-emerald-400" />
-                  Save as Preset
+                  {t.artistSelection.savePreset}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onClearSelected}
-                  className="text-xs text-zinc-400 hover:text-red-400"
+                  className="text-xs h-8 text-zinc-400 hover:text-red-400 px-2.5"
                 >
-                  Clear
+                  {t.artistSelection.clear}
                 </Button>
               </>
             )}
@@ -192,12 +205,12 @@ export function ArtistSelection({
           {isSavingPreset && (
             <form
               onSubmit={handleSubmit(onSavePresetSubmit)}
-              className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-xl bg-zinc-950/60 border border-emerald-500/30"
+              className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 rounded-xl bg-zinc-950/60 border border-emerald-500/30"
             >
               <div className="flex-1 w-full">
                 <Input
                   {...register('name')}
-                  placeholder="Preset name (e.g. Classic Rock, Indie Favorites)"
+                  placeholder={t.artistSelection.presetPlaceholder}
                   className="h-9 text-xs"
                   autoFocus
                 />
@@ -208,21 +221,21 @@ export function ArtistSelection({
                   <p className="text-[11px] text-red-400 mt-1">
                     {createPresetMutation.error instanceof Error
                       ? createPresetMutation.error.message
-                      : 'Failed to save preset.'}
+                      : t.artistSelection.presetSaveFailed}
                   </p>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end">
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isSubmitting || createPresetMutation.isPending}
-                  className="text-xs h-9"
+                  className="text-xs h-9 px-4"
                 >
                   {createPresetMutation.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    'Save'
+                    t.artistSelection.presetSave
                   )}
                 </Button>
                 <Button
@@ -232,7 +245,7 @@ export function ArtistSelection({
                   onClick={() => setIsSavingPreset(false)}
                   className="text-xs h-9"
                 >
-                  Cancel
+                  {t.artistSelection.presetCancel}
                 </Button>
               </div>
             </form>
@@ -240,18 +253,18 @@ export function ArtistSelection({
 
           {/* Selected artists chips */}
           {selectedArtists.length === 0 ? (
-            <div className="py-6 text-center text-sm text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-              No artists selected yet. Search or pick from below!
+            <div className="py-6 px-4 text-center text-xs sm:text-sm text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
+              {t.artistSelection.noArtistsSelected}
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-44 overflow-y-auto pr-1">
               {selectedArtists.map((artist) => (
                 <button
                   key={artist.id}
                   type="button"
                   onClick={() => onToggleArtist(artist)}
-                  className="group flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/30 pl-1 pr-2.5 py-1 text-xs text-zinc-200 transition-all hover:border-red-500/50 hover:bg-red-950/30 hover:text-red-200 cursor-pointer"
-                  title={`Remove ${artist.name}`}
+                  className="group flex items-center gap-1.5 sm:gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/30 pl-1 pr-2.5 py-1 text-xs text-zinc-200 transition-all hover:border-red-500/50 hover:bg-red-950/30 hover:text-red-200 cursor-pointer max-w-full"
+                  title={`${t.artistSelection.removeArtist} ${artist.name}`}
                 >
                   {artist.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -265,11 +278,11 @@ export function ArtistSelection({
                       {artist.name[0]}
                     </div>
                   )}
-                  <span className="font-medium text-zinc-200 group-hover:text-red-200 transition-colors">
+                  <span className="font-medium text-zinc-200 group-hover:text-red-200 transition-colors truncate">
                     {artist.name}
                   </span>
-                  <span className="text-zinc-400 group-hover:text-red-400 transition-colors ml-0.5 shrink-0">
-                    <X className="h-3.5 w-3.5" />
+                  <span className="text-zinc-400 group-hover:text-red-400 transition-colors shrink-0">
+                    <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </span>
                 </button>
               ))}
@@ -281,12 +294,12 @@ export function ArtistSelection({
       {/* Quick Preset Selector */}
       {presets.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="text-zinc-500 font-medium whitespace-nowrap">Quick presets:</span>
+          <span className="text-zinc-500 font-medium whitespace-nowrap">{t.artistSelection.quickPresets}</span>
           {presets.map((p) => (
             <button
               key={p.id}
               onClick={() => {
-                const artistsList: Artist[] = (p.artists as any).map((a: any) => ({
+                const artistsList: Artist[] = p.artists.map((a) => ({
                   id: a.id,
                   name: a.name,
                   imageUrl: a.imageUrl,
@@ -297,7 +310,7 @@ export function ArtistSelection({
             >
               <Sparkles className="h-3 w-3 text-emerald-400" />
               {p.name}
-              <span className="text-[10px] text-zinc-500">({(p.artists as any[]).length})</span>
+              <span className="text-[10px] text-zinc-500">({p.artists.length})</span>
             </button>
           ))}
         </div>
@@ -309,8 +322,8 @@ export function ArtistSelection({
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search artist by name in Spotify catalog..."
-          className="pl-11 pr-10 h-11 bg-zinc-900/90 text-sm"
+          placeholder={t.artistSelection.searchPlaceholder}
+          className="pl-11 pr-10 h-10 sm:h-11 bg-zinc-900/90 text-xs sm:text-sm"
         />
         {isSearching && (
           <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-emerald-400" />
@@ -321,20 +334,22 @@ export function ArtistSelection({
       {searchQuery.trim().length > 1 && (
         <Card className="border-zinc-800 bg-zinc-900/90">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-400">Search Results</CardTitle>
+            <CardTitle className="text-sm text-zinc-400">{t.artistSelection.searchResults}</CardTitle>
           </CardHeader>
           <CardContent>
             {searchResults.length === 0 && !isSearching ? (
-              <p className="text-xs text-zinc-500 py-2">No artists found for &ldquo;{searchQuery}&rdquo;</p>
+              <p className="text-xs text-zinc-500 py-2">
+                {t.artistSelection.noArtistsFound.replace('{query}', searchQuery)}
+              </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-60 overflow-y-auto pr-1">
                 {searchResults.map((artist) => {
                   const selected = isSelected(artist.id);
                   return (
                     <button
                       key={artist.id}
                       onClick={() => onToggleArtist(artist)}
-                      className={`flex items-center gap-2.5 p-2 rounded-xl text-left border transition-all ${
+                      className={`flex items-center gap-2.5 p-2 rounded-xl text-left border transition-all cursor-pointer ${
                         selected
                           ? 'border-emerald-500 bg-emerald-950/30 text-white'
                           : 'border-zinc-800 bg-zinc-950/40 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800/40'
@@ -345,10 +360,10 @@ export function ArtistSelection({
                         <img
                           src={artist.imageUrl}
                           alt={artist.name}
-                          className="h-9 w-9 rounded-full object-cover shrink-0"
+                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover shrink-0"
                         />
                       ) : (
-                        <div className="h-9 w-9 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs shrink-0">
+                        <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs shrink-0">
                           {artist.name[0]}
                         </div>
                       )}
@@ -373,13 +388,13 @@ export function ArtistSelection({
 
       {/* Followed Artists on Spotify */}
       <Card className="border-zinc-800 bg-zinc-900/60">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <CardTitle className="text-base text-zinc-200">
-              Artists you follow on Spotify
+              {t.artistSelection.followedTitle}
             </CardTitle>
-            <p className="text-xs text-zinc-400">
-              Click to select or deselect from the randomize pool
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {t.artistSelection.followedSubtitle}
             </p>
           </div>
 
@@ -400,11 +415,15 @@ export function ArtistSelection({
                   onSelectMultiple(Array.from(merged.values()));
                 }
               }}
-              className="text-xs"
+              className="text-xs self-start sm:self-auto h-8"
             >
               {displayedFollowedArtists.every((a) => isSelected(a.id))
-                ? selectedGenre ? `Deselect all (${selectedGenre})` : 'Deselect all'
-                : selectedGenre ? `Select all (${selectedGenre})` : 'Select all'}
+                ? selectedGenre
+                  ? t.artistSelection.deselectAllGenre.replace('{genre}', selectedGenre)
+                  : t.artistSelection.deselectAll
+                : selectedGenre
+                ? t.artistSelection.selectAllGenre.replace('{genre}', selectedGenre)
+                : t.artistSelection.selectAll}
             </Button>
           )}
         </CardHeader>
@@ -415,7 +434,7 @@ export function ArtistSelection({
             <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-3 text-xs">
               <span className="text-[11px] font-medium text-zinc-500 shrink-0 mr-1 flex items-center gap-1">
                 <Filter className="h-3 w-3" />
-                Genre:
+                {t.artistSelection.genreLabel}
               </span>
               <button
                 type="button"
@@ -426,7 +445,7 @@ export function ArtistSelection({
                     : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
                 }`}
               >
-                All ({sortedFollowedArtists.length})
+                {t.artistSelection.allGenres} ({sortedFollowedArtists.length})
               </button>
               {availableGenres.map(({ name, count }) => {
                 const isCurrent = selectedGenre === name;
@@ -452,28 +471,28 @@ export function ArtistSelection({
           )}
 
           {loadingFollowed ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {Array.from({ length: 10 }).map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="h-14 rounded-xl bg-zinc-800/50 animate-pulse" />
               ))}
             </div>
           ) : sortedFollowedArtists.length === 0 ? (
             <div className="py-6 text-center text-xs text-zinc-500">
-              No followed artists found on your Spotify account. Use the search above to add any artist!
+              {t.artistSelection.noFollowedArtists}
             </div>
           ) : displayedFollowedArtists.length === 0 ? (
             <div className="py-6 text-center text-xs text-zinc-500">
-              No artists found for genre &ldquo;{selectedGenre}&rdquo;.
+              {t.artistSelection.noArtistsForGenre.replace('{genre}', selectedGenre || '')}
               <button
                 type="button"
                 onClick={() => setSelectedGenre(null)}
                 className="ml-2 text-emerald-400 hover:underline cursor-pointer"
               >
-                Clear filter
+                {t.artistSelection.clearFilter}
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-72 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-2.5 max-h-80 overflow-y-auto pr-1">
               {displayedFollowedArtists.map((artist) => {
                 const selected = isSelected(artist.id);
                 return (
@@ -491,10 +510,10 @@ export function ArtistSelection({
                       <img
                         src={artist.imageUrl}
                         alt={artist.name}
-                        className="h-10 w-10 rounded-full object-cover shrink-0"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover shrink-0"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs shrink-0">
                         {artist.name[0]}
                       </div>
                     )}

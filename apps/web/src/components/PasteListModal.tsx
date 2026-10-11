@@ -13,11 +13,11 @@ import {
   ArrowLeft,
   Check,
   Trash2,
-  Sparkles,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { apiFetch } from '@/lib/api';
+import { useLanguage } from '@/contexts/language-context';
 import type { Artist, BatchSearchResponse } from '@randomify/shared';
 
 interface ReviewItem {
@@ -33,6 +33,7 @@ interface PasteListModalProps {
 }
 
 export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModalProps) {
+  const { t } = useLanguage();
   const [step, setStep] = useState<'input' | 'review'>('input');
   const [inputText, setInputText] = useState('');
   const [items, setItems] = useState<ReviewItem[]>([]);
@@ -160,28 +161,30 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
   const notFoundCount = items.length - resolvedCount;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3.5 sm:p-4">
+      <div className="w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+        <div className="flex items-center justify-between border-b border-zinc-800 pb-3 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0">
               <ClipboardPaste className="h-5 w-5" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">
-                {step === 'input' ? 'Paste Artist List' : 'Review Matched Artists'}
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white truncate">
+                {step === 'input' ? t.pasteList.titleInput : t.pasteList.titleReview}
               </h2>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 truncate">
                 {step === 'input'
-                  ? 'Paste artist names or Spotify URLs to add them in bulk'
-                  : `Resolved ${resolvedCount} of ${items.length} artists`}
+                  ? t.pasteList.subtitleInput
+                  : t.pasteList.subtitleReview
+                      .replace('{resolved}', String(resolvedCount))
+                      .replace('{total}', String(items.length))}
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="rounded-full p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="rounded-full p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
           >
             <X className="h-5 w-5" />
           </button>
@@ -192,9 +195,12 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
           <form onSubmit={handleStartReview} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-zinc-300 flex items-center justify-between">
-                <span>Artist names (one per line or comma-separated):</span>
+                <span>{t.pasteList.inputLabel}</span>
                 <span className="text-[11px] text-emerald-400 font-mono">
-                  {parsedQueries.length} {parsedQueries.length === 1 ? 'artist' : 'artists'} detected
+                  {parsedQueries.length}{' '}
+                  {parsedQueries.length === 1
+                    ? t.pasteList.artistsDetectedOne
+                    : t.pasteList.artistsDetectedMany}
                 </span>
               </label>
               <textarea
@@ -217,7 +223,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                 disabled={batchSearchMutation.isPending}
                 className="text-xs text-zinc-400 hover:text-white"
               >
-                Cancel
+                {t.common.cancel}
               </Button>
               <Button
                 type="submit"
@@ -228,12 +234,12 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                 {batchSearchMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Searching on Spotify...
+                    {t.pasteList.searching}
                   </>
                 ) : (
                   <>
                     <Search className="h-4 w-4" />
-                    Find Artists ({parsedQueries.length})
+                    {t.pasteList.findArtists} ({parsedQueries.length})
                   </>
                 )}
               </Button>
@@ -249,13 +255,17 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
               <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-300">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
                 <span>
-                  <strong>{notFoundCount} {notFoundCount === 1 ? 'artist was' : 'artists were'} not found automatically.</strong> Click &ldquo;Search manually&rdquo; on the item to find the exact match.
+                  {notFoundCount === 1
+                    ? t.pasteList.alertNotFoundOne
+                    : t.pasteList.alertNotFoundMany.replace('{count}', String(notFoundCount))}
                 </span>
               </div>
             ) : (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-300">
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                <span>All {items.length} artists were matched successfully! Review and confirm below.</span>
+                <span>
+                  {t.pasteList.alertAllMatched.replace('{count}', String(items.length))}
+                </span>
               </div>
             )}
 
@@ -274,19 +284,19 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                         : 'border-amber-500/40 bg-amber-950/15'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
                       {isFound ? (
                         /* Found Artist Card */
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                           {item.artist?.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={item.artist.imageUrl}
                               alt={item.artist.name}
-                              className="h-10 w-10 rounded-full object-cover shrink-0 border border-emerald-500/40"
+                              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover shrink-0 border border-emerald-500/40"
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded-full bg-emerald-800/60 text-white font-bold flex items-center justify-center shrink-0">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-emerald-800/60 text-white font-bold flex items-center justify-center shrink-0 text-xs">
                               {item.artist?.name[0]}
                             </div>
                           )}
@@ -296,11 +306,11 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                                 {item.artist?.name}
                               </p>
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[10px] text-emerald-300">
-                                <Check className="h-2.5 w-2.5" /> Matched
+                                <Check className="h-2.5 w-2.5" /> {t.common.matched}
                               </span>
                             </div>
                             <p className="text-[11px] text-zinc-400 truncate">
-                              Query: &ldquo;{item.query}&rdquo;
+                              {t.pasteList.queryLabel} &ldquo;{item.query}&rdquo;
                             </p>
                           </div>
                         </div>
@@ -312,17 +322,17 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                               &ldquo;{item.query}&rdquo;
                             </span>
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/40 text-[10px] text-amber-300">
-                              <AlertTriangle className="h-2.5 w-2.5" /> Not found
+                              <AlertTriangle className="h-2.5 w-2.5" /> {t.common.notFound}
                             </span>
                           </div>
                           <p className="text-[11px] text-zinc-400 mt-0.5">
-                            No exact match in Spotify catalog. Search manually to pick the correct artist.
+                            {t.pasteList.noMatchHelp}
                           </p>
                         </div>
                       )}
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
                         {!isFound && !isManualOpen && (
                           <Button
                             type="button"
@@ -332,7 +342,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                             className="h-7 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-950/40 hover:text-amber-200 gap-1.5"
                           >
                             <Search className="h-3 w-3" />
-                            Search manually
+                            {t.pasteList.searchManually}
                           </Button>
                         )}
 
@@ -343,9 +353,9 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                             variant="ghost"
                             onClick={() => handleOpenManualSearch(index, item.query)}
                             className="h-7 px-2 text-[11px] text-zinc-400 hover:text-zinc-200"
-                            title="Pick different artist"
+                            title={t.pasteList.changeTitle}
                           >
-                            Change
+                            {t.pasteList.change}
                           </Button>
                         )}
 
@@ -355,7 +365,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                           variant="ghost"
                           onClick={() => handleRemoveItem(index)}
                           className="h-7 w-7 p-0 text-zinc-500 hover:text-red-400"
-                          title="Remove from import"
+                          title={t.pasteList.removeTitle}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -374,7 +384,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                                 setManualQuery(e.target.value);
                                 handleSearchManualQuery(e.target.value);
                               }}
-                              placeholder="Search Spotify artist name..."
+                              placeholder={t.pasteList.manualSearchPlaceholder}
                               className="h-8 pl-8 text-xs bg-zinc-950 border-zinc-700"
                               autoFocus
                             />
@@ -389,7 +399,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                             onClick={() => setActiveManualIndex(null)}
                             className="h-8 text-xs text-zinc-400 hover:text-white"
                           >
-                            Cancel
+                            {t.common.cancel}
                           </Button>
                         </div>
 
@@ -397,7 +407,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                         {manualCandidates.length > 0 && (
                           <div className="space-y-1 pt-1 max-h-40 overflow-y-auto pr-1">
                             <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">
-                              Select correct artist:
+                              {t.pasteList.selectCorrectArtist}
                             </p>
                             {manualCandidates.map((candidate) => (
                               <button
@@ -431,7 +441,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                                   </div>
                                 </div>
                                 <span className="text-[11px] text-emerald-400 font-medium shrink-0 ml-2">
-                                  Select
+                                  {t.pasteList.select}
                                 </span>
                               </button>
                             ))}
@@ -440,7 +450,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
 
                         {!isManualSearching && manualCandidates.length === 0 && manualQuery.trim() !== '' && (
                           <p className="text-[11px] text-zinc-500 py-1">
-                            No artists found on Spotify for &ldquo;{manualQuery}&rdquo;.
+                            {t.pasteList.noArtistsForQuery.replace('{query}', manualQuery)}
                           </p>
                         )}
                       </div>
@@ -460,7 +470,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                 className="text-xs text-zinc-400 hover:text-white gap-1.5"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Back to text
+                {t.pasteList.backToText}
               </Button>
 
               <div className="flex items-center gap-2">
@@ -471,7 +481,7 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                   onClick={handleClose}
                   className="text-xs text-zinc-400 hover:text-white"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </Button>
                 <Button
                   type="button"
@@ -481,7 +491,9 @@ export function PasteListModal({ isOpen, onClose, onAddArtists }: PasteListModal
                   className="gap-1.5 text-xs font-semibold"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add {resolvedCount} {resolvedCount === 1 ? 'Artist' : 'Artists'} to Selection
+                  {resolvedCount === 1
+                    ? t.pasteList.addOne
+                    : t.pasteList.addMany.replace('{count}', String(resolvedCount))}
                 </Button>
               </div>
             </div>

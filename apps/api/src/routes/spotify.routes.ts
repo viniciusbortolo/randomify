@@ -394,15 +394,29 @@ export async function spotifyRoutes(app: FastifyInstance) {
     const { artistIds, type } = parsed.data;
     const userId = request.user!.id;
     const timeZone = (request.headers['x-timezone'] as string) || (request.query as any)?.timezone || 'UTC';
+    const acceptLang = ((request.headers['accept-language'] as string) || '').toLowerCase();
+    const isPt = acceptLang.includes('pt');
 
     // Verificar limite diário de sorteios para a categoria (máximo 3 por categoria por dia)
     const currentLimits = await getUserSpinLimits(userId, timeZone);
     const categoryLimit = currentLimits[type];
 
     if (categoryLimit.remaining <= 0) {
-      const categoryLabel = type === 'single' ? 'single / EP' : type;
+      const categoryLabel = isPt
+        ? type === 'single'
+          ? 'singles e EPs'
+          : type === 'album'
+          ? 'álbuns'
+          : 'músicas'
+        : type === 'single'
+        ? 'single / EP'
+        : type;
+      const errorMsg = isPt
+        ? `Limite diário atingido para ${categoryLabel}. Você pode sortear até ${DAILY_SPIN_LIMIT} vezes por dia.`
+        : `Daily limit reached for ${categoryLabel}. You can spin up to ${DAILY_SPIN_LIMIT} times per day.`;
+
       return reply.status(429).send({
-        error: `Daily limit reached for ${categoryLabel}. You can spin up to ${DAILY_SPIN_LIMIT} times per day.`,
+        error: errorMsg,
         spinLimits: currentLimits,
       });
     }
@@ -512,7 +526,9 @@ export async function spotifyRoutes(app: FastifyInstance) {
         );
 
         if (!topTracksData.tracks || topTracksData.tracks.length === 0) {
-          return reply.status(404).send({ error: 'No tracks found for this artist.' });
+          return reply.status(404).send({
+            error: isPt ? 'Nenhuma música encontrada para este artista.' : 'No tracks found for this artist.',
+          });
         }
 
         const unplayedTop = topTracksData.tracks.filter(
@@ -578,7 +594,11 @@ export async function spotifyRoutes(app: FastifyInstance) {
       const albums = await fetchArtistAlbums(token, selectedArtistId, 'album');
 
       if (albums.length === 0) {
-        return reply.status(404).send({ error: `No full albums found for artist ${selectedArtist.name}.` });
+        return reply.status(404).send({
+          error: isPt
+            ? `Nenhum álbum completo encontrado para o artista ${selectedArtist.name}.`
+            : `No full albums found for artist ${selectedArtist.name}.`,
+        });
       }
 
       // Evita álbuns sorteados recentemente
@@ -643,7 +663,11 @@ export async function spotifyRoutes(app: FastifyInstance) {
       const singles = await fetchArtistAlbums(token, selectedArtistId, 'single');
 
       if (singles.length === 0) {
-        return reply.status(404).send({ error: `No singles or EPs found for artist ${selectedArtist.name}.` });
+        return reply.status(404).send({
+          error: isPt
+            ? `Nenhum single ou EP encontrado para o artista ${selectedArtist.name}.`
+            : `No singles or EPs found for artist ${selectedArtist.name}.`,
+        });
       }
 
       // Evita singles/EPs sorteados recentemente

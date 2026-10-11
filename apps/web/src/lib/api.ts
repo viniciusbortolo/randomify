@@ -24,6 +24,19 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
     }
   }
 
+  if (!headers.has('Accept-Language') && typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('randomify_locale');
+      if (saved) {
+        headers.set('Accept-Language', saved === 'pt-BR' ? 'pt-BR,pt;q=0.9' : 'en-US,en;q=0.9');
+      } else if (navigator.language) {
+        headers.set('Accept-Language', navigator.language);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
