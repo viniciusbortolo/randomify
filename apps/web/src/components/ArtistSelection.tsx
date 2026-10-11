@@ -195,31 +195,32 @@ export function ArtistSelection({
           ) : (
             <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
               {selectedArtists.map((artist) => (
-                <div
+                <button
                   key={artist.id}
-                  className="group flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/30 pl-1 pr-3 py-1 text-xs text-emerald-200 transition-all hover:border-red-500/40 hover:bg-red-950/20"
+                  type="button"
+                  onClick={() => onToggleArtist(artist)}
+                  className="group flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/30 pl-1 pr-2.5 py-1 text-xs text-zinc-200 transition-all hover:border-red-500/50 hover:bg-red-950/30 hover:text-red-200 cursor-pointer"
+                  title={`Remove ${artist.name}`}
                 >
                   {artist.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={artist.imageUrl}
                       alt={artist.name}
-                      className="h-5 w-5 rounded-full object-cover"
+                      className="h-5 w-5 rounded-full object-cover shrink-0"
                     />
                   ) : (
-                    <div className="h-5 w-5 rounded-full bg-emerald-800/60 text-[10px] flex items-center justify-center font-bold">
+                    <div className="h-5 w-5 rounded-full bg-emerald-800/60 text-[10px] flex items-center justify-center font-bold text-white shrink-0 group-hover:bg-red-900/60 transition-colors">
                       {artist.name[0]}
                     </div>
                   )}
-                  <span className="font-medium">{artist.name}</span>
-                  <button
-                    onClick={() => onToggleArtist(artist)}
-                    className="text-emerald-400 group-hover:text-red-400 transition-colors ml-0.5"
-                    title="Remove"
-                  >
+                  <span className="font-medium text-zinc-200 group-hover:text-red-200 transition-colors">
+                    {artist.name}
+                  </span>
+                  <span className="text-zinc-400 group-hover:text-red-400 transition-colors ml-0.5 shrink-0">
                     <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                  </span>
+                </button>
               ))}
             </div>
           )}
