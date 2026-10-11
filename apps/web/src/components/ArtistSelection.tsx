@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,6 +43,13 @@ export function ArtistSelection({
     queryKey: ['spotify', 'followed-artists'],
     queryFn: () => apiFetch<Artist[]>('/spotify/followed-artists'),
   });
+
+  // Sort followed artists alphabetically A-Z
+  const sortedFollowedArtists = useMemo(() => {
+    return [...followedArtists].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    );
+  }, [followedArtists]);
 
   // Search artists by name
   const { data: searchResults = [], isFetching: isSearching } = useQuery<Artist[]>({
@@ -332,21 +339,21 @@ export function ArtistSelection({
             </p>
           </div>
 
-          {followedArtists.length > 0 && (
+          {sortedFollowedArtists.length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                const allSelected = followedArtists.every((a) => isSelected(a.id));
+                const allSelected = sortedFollowedArtists.every((a) => isSelected(a.id));
                 if (allSelected) {
                   onClearSelected();
                 } else {
-                  onSelectMultiple(followedArtists);
+                  onSelectMultiple(sortedFollowedArtists);
                 }
               }}
               className="text-xs"
             >
-              {followedArtists.every((a) => isSelected(a.id))
+              {sortedFollowedArtists.every((a) => isSelected(a.id))
                 ? 'Deselect all'
                 : 'Select all'}
             </Button>
@@ -360,13 +367,13 @@ export function ArtistSelection({
                 <div key={i} className="h-14 rounded-xl bg-zinc-800/50 animate-pulse" />
               ))}
             </div>
-          ) : followedArtists.length === 0 ? (
+          ) : sortedFollowedArtists.length === 0 ? (
             <div className="py-6 text-center text-xs text-zinc-500">
               No followed artists found on your Spotify account. Use the search above to add any artist!
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-72 overflow-y-auto pr-1">
-              {followedArtists.map((artist) => {
+              {sortedFollowedArtists.map((artist) => {
                 const selected = isSelected(artist.id);
                 return (
                   <button

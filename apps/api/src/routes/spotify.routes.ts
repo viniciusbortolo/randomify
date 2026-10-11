@@ -127,15 +127,17 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     const data = await spotifyFetch<SpotifyFollowedResponse>(token, '/me/following?type=artist&limit=50');
 
-    const formatted = data.artists.items.map((artist) => ({
-      id: artist.id,
-      name: artist.name,
-      imageUrl: artist.images[0]?.url || null,
-      genres: artist.genres,
-      popularity: artist.popularity,
-      uri: artist.uri,
-      externalUrl: artist.external_urls.spotify,
-    }));
+    const formatted = data.artists.items
+      .map((artist) => ({
+        id: artist.id,
+        name: artist.name,
+        imageUrl: artist.images[0]?.url || null,
+        genres: artist.genres,
+        popularity: artist.popularity,
+        uri: artist.uri,
+        externalUrl: artist.external_urls.spotify,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
     return reply.send(formatted);
   });
