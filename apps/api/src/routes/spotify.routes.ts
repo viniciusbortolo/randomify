@@ -155,7 +155,7 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     const data = await spotifyFetch<SpotifySearchResponse>(
       token,
-      `/search?type=artist&q=${encodeURIComponent(q.trim())}&limit=20`
+      `/search?type=artist&q=${encodeURIComponent(q.trim())}&limit=10`
     );
 
     const formatted = data.artists.items.map((artist) => ({
