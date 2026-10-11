@@ -4,9 +4,12 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
   const token = typeof window !== 'undefined' ? localStorage.getItem('randomify_token') : null;
 
   const headers = new Headers(options.headers || {});
-  headers.set('Content-Type', 'application/json');
+  
+  if (options.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
 
-  if (token) {
+  if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 

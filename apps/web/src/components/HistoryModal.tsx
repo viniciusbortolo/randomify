@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Trash2, ExternalLink, History as HistoryIcon, Music, Disc, Radio } from 'lucide-react';
+import { X, Trash2, ExternalLink, History as HistoryIcon, Music, Disc, Radio, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { apiFetch } from '@/lib/api';
@@ -25,6 +25,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   const clearHistoryMutation = useMutation({
     mutationFn: () => apiFetch('/history', { method: 'DELETE' }),
     onSuccess: () => {
+      queryClient.setQueryData(['history'], []);
       queryClient.invalidateQueries({ queryKey: ['history'] });
     },
   });
@@ -48,7 +49,11 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                 disabled={clearHistoryMutation.isPending}
                 className="text-xs text-zinc-400 hover:text-red-400 gap-1.5"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                {clearHistoryMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
                 Clear
               </Button>
             )}
