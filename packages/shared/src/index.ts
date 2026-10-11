@@ -103,7 +103,14 @@ export const BatchSearchRequestSchema = z.object({
 });
 export type BatchSearchRequest = z.infer<typeof BatchSearchRequestSchema>;
 
+export const BatchSearchResultItemSchema = z.object({
+  query: z.string(),
+  artist: ArtistSchema.nullable(),
+});
+export type BatchSearchResultItem = z.infer<typeof BatchSearchResultItemSchema>;
+
 export const BatchSearchResponseSchema = z.object({
+  items: z.array(BatchSearchResultItemSchema),
   found: z.array(ArtistSchema),
   notFound: z.array(z.string()),
 });

@@ -184,6 +184,7 @@ export async function spotifyRoutes(app: FastifyInstance) {
     const userId = request.user!.id;
     const token = await getValidAccessTokenForUser(userId);
 
+    const items: Array<{ query: string; artist: any | null }> = [];
     const found: any[] = [];
     const notFound: string[] = [];
     const seenIds = new Set<string>();
@@ -192,30 +193,27 @@ export async function spotifyRoutes(app: FastifyInstance) {
     for (let i = 0; i < queries.length; i += chunkSize) {
       const chunk = queries.slice(i, i + chunkSize);
 
-      await Promise.all(
+      const chunkResults = await Promise.all(
         chunk.map(async (rawQuery) => {
           const cleaned = rawQuery.replace(/^(\d+[\.\)]|[-*•])\s*/, '').trim();
-          if (!cleaned) return;
+          if (!cleaned) return null;
 
           try {
             // Check if it's a Spotify link or URI
             const spotifyUrlMatch = cleaned.match(/artist[/:]([a-zA-Z0-9]{22})/);
             if (spotifyUrlMatch) {
               const artistId = spotifyUrlMatch[1];
-              if (!seenIds.has(artistId)) {
-                const artist = await spotifyFetch<SpotifyArtistInfo>(token, `/artists/${artistId}`);
-                seenIds.add(artist.id);
-                found.push({
-                  id: artist.id,
-                  name: artist.name,
-                  imageUrl: artist.images[0]?.url || null,
-                  genres: artist.genres,
-                  popularity: artist.popularity,
-                  uri: artist.uri,
-                  externalUrl: artist.external_urls.spotify,
-                });
-                return;
-              }
+              const artist = await spotifyFetch<SpotifyArtistInfo>(token, `/artists/${artistId}`);
+              const formatted = {
+                id: artist.id,
+                name: artist.name,
+                imageUrl: artist.images[0]?.url || null,
+                genres: artist.genres,
+                popularity: artist.popularity,
+                uri: artist.uri,
+                externalUrl: artist.external_urls.spotify,
+              };
+              return { query: cleaned, artist: formatted };
             }
 
             // Search by name on Spotify
@@ -226,29 +224,40 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
             if (searchData.artists.items.length > 0) {
               const artist = searchData.artists.items[0];
-              if (!seenIds.has(artist.id)) {
-                seenIds.add(artist.id);
-                found.push({
-                  id: artist.id,
-                  name: artist.name,
-                  imageUrl: artist.images[0]?.url || null,
-                  genres: artist.genres,
-                  popularity: artist.popularity,
-                  uri: artist.uri,
-                  externalUrl: artist.external_urls.spotify,
-                });
-              }
-            } else {
-              notFound.push(cleaned);
+              const formatted = {
+                id: artist.id,
+                name: artist.name,
+                imageUrl: artist.images[0]?.url || null,
+                genres: artist.genres,
+                popularity: artist.popularity,
+                uri: artist.uri,
+                externalUrl: artist.external_urls.spotify,
+              };
+              return { query: cleaned, artist: formatted };
             }
+
+            return { query: cleaned, artist: null };
           } catch {
-            notFound.push(cleaned);
+            return { query: cleaned, artist: null };
           }
         })
       );
+
+      for (const res of chunkResults) {
+        if (!res) continue;
+        items.push(res);
+        if (res.artist) {
+          if (!seenIds.has(res.artist.id)) {
+            seenIds.add(res.artist.id);
+            found.push(res.artist);
+          }
+        } else {
+          notFound.push(res.query);
+        }
+      }
     }
 
-    return reply.send({ found, notFound });
+    return reply.send({ items, found, notFound });
   });
 
   // Randomize track, album, or single/EP
