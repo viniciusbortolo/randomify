@@ -357,6 +357,20 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     const token = await getValidAccessTokenForUser(userId);
 
+    // Buscar histórico recente para evitar repetições consecutivas (últimos 20 sorteios)
+    const recentHistory = await prisma.drawHistory.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        itemUri: true,
+        itemName: true,
+      },
+    });
+
+    const recentUris = new Set(recentHistory.map((h) => h.itemUri));
+    const recentNames = new Set(recentHistory.map((h) => h.itemName.toLowerCase().trim()));
+
     // 1. Escolhe um artista aleatoriamente da lista fornecida
     const selectedArtistId = artistIds[Math.floor(Math.random() * artistIds.length)];
 
@@ -379,27 +393,62 @@ export async function spotifyRoutes(app: FastifyInstance) {
       let chosenTrack: any = null;
 
       if (albums.length > 0) {
-        // Escolhe um álbum/single aleatório
-        const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
-        const tracksData = await spotifyFetch<SpotifyAlbumTracksResponse>(
-          token,
-          `/albums/${randomAlbum.id}/tracks?limit=20`
-        );
+        // Embaralha os álbuns para variar a busca
+        const shuffledAlbums = [...albums].sort(() => Math.random() - 0.5);
 
-        if (tracksData.items.length > 0) {
-          const track = tracksData.items[Math.floor(Math.random() * tracksData.items.length)];
-          chosenTrack = {
-            id: track.id,
-            name: track.name,
-            uri: track.uri,
-            externalUrl: track.external_urls.spotify,
-            imageUrl: randomAlbum.images[0]?.url || selectedArtist.imageUrl,
-            artistNames: track.artists.map((a) => a.name),
-            durationMs: track.duration_ms,
-            previewUrl: track.preview_url,
-            albumName: randomAlbum.name,
-            releaseDate: randomAlbum.release_date,
-          };
+        // Tenta encontrar uma faixa que não tenha sido sorteada recentemente
+        for (const albumCandidate of shuffledAlbums) {
+          const tracksData = await spotifyFetch<SpotifyAlbumTracksResponse>(
+            token,
+            `/albums/${albumCandidate.id}/tracks?limit=20`
+          );
+
+          if (tracksData.items && tracksData.items.length > 0) {
+            const unplayedTracks = tracksData.items.filter(
+              (t) => !recentUris.has(t.uri) && !recentNames.has(t.name.toLowerCase().trim())
+            );
+
+            if (unplayedTracks.length > 0) {
+              const track = unplayedTracks[Math.floor(Math.random() * unplayedTracks.length)];
+              chosenTrack = {
+                id: track.id,
+                name: track.name,
+                uri: track.uri,
+                externalUrl: track.external_urls.spotify,
+                imageUrl: albumCandidate.images[0]?.url || selectedArtist.imageUrl,
+                artistNames: track.artists.map((a) => a.name),
+                durationMs: track.duration_ms,
+                previewUrl: track.preview_url,
+                albumName: albumCandidate.name,
+                releaseDate: albumCandidate.release_date,
+              };
+              break;
+            }
+          }
+        }
+
+        // Fallback: se todas as faixas dos álbuns testados já estavam no histórico, pega qualquer uma
+        if (!chosenTrack) {
+          const fallbackAlbum = albums[Math.floor(Math.random() * albums.length)];
+          const tracksData = await spotifyFetch<SpotifyAlbumTracksResponse>(
+            token,
+            `/albums/${fallbackAlbum.id}/tracks?limit=20`
+          );
+          if (tracksData.items && tracksData.items.length > 0) {
+            const track = tracksData.items[Math.floor(Math.random() * tracksData.items.length)];
+            chosenTrack = {
+              id: track.id,
+              name: track.name,
+              uri: track.uri,
+              externalUrl: track.external_urls.spotify,
+              imageUrl: fallbackAlbum.images[0]?.url || selectedArtist.imageUrl,
+              artistNames: track.artists.map((a) => a.name),
+              durationMs: track.duration_ms,
+              previewUrl: track.preview_url,
+              albumName: fallbackAlbum.name,
+              releaseDate: fallbackAlbum.release_date,
+            };
+          }
         }
       }
 
@@ -414,7 +463,12 @@ export async function spotifyRoutes(app: FastifyInstance) {
           return reply.status(404).send({ error: 'No tracks found for this artist.' });
         }
 
-        const track = topTracksData.tracks[Math.floor(Math.random() * topTracksData.tracks.length)];
+        const unplayedTop = topTracksData.tracks.filter(
+          (t) => !recentUris.has(t.uri) && !recentNames.has(t.name.toLowerCase().trim())
+        );
+        const candidateTracks = unplayedTop.length > 0 ? unplayedTop : topTracksData.tracks;
+        const track = candidateTracks[Math.floor(Math.random() * candidateTracks.length)];
+
         chosenTrack = {
           id: track.id,
           name: track.name,
@@ -475,7 +529,12 @@ export async function spotifyRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: `No full albums found for artist ${selectedArtist.name}.` });
       }
 
-      const album = albums[Math.floor(Math.random() * albums.length)];
+      // Evita álbuns sorteados recentemente
+      const unplayedAlbums = albums.filter(
+        (a) => !recentUris.has(a.uri) && !recentNames.has(a.name.toLowerCase().trim())
+      );
+      const candidateAlbums = unplayedAlbums.length > 0 ? unplayedAlbums : albums;
+      const album = candidateAlbums[Math.floor(Math.random() * candidateAlbums.length)];
 
       const chosenAlbum = {
         id: album.id,
@@ -535,7 +594,12 @@ export async function spotifyRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: `No singles or EPs found for artist ${selectedArtist.name}.` });
       }
 
-      const single = singles[Math.floor(Math.random() * singles.length)];
+      // Evita singles/EPs sorteados recentemente
+      const unplayedSingles = singles.filter(
+        (s) => !recentUris.has(s.uri) && !recentNames.has(s.name.toLowerCase().trim())
+      );
+      const candidateSingles = unplayedSingles.length > 0 ? unplayedSingles : singles;
+      const single = candidateSingles[Math.floor(Math.random() * candidateSingles.length)];
 
       const chosenSingle = {
         id: single.id,
