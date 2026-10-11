@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { getValidAccessTokenForUser, spotifyFetch } from '../lib/spotify.js';
 import { prisma } from '../lib/prisma.js';
-import { RandomizeRequestSchema } from '@randomify/shared';
+import { RandomizeRequestSchema, BatchSearchRequestSchema } from '@randomify/shared';
 
 interface SpotifyFollowedResponse {
   artists: {
@@ -169,7 +169,89 @@ export async function spotifyRoutes(app: FastifyInstance) {
     return reply.send(formatted);
   });
 
-  // Sortear música, álbum ou single/EP
+  // Batch search and resolve artists by names or Spotify URLs
+  app.post('/spotify/batch-search', { preHandler: [authenticate] }, async (request, reply) => {
+    const parsed = BatchSearchRequestSchema.safeParse(request.body);
+
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: 'Invalid request',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const { queries } = parsed.data;
+    const userId = request.user!.id;
+    const token = await getValidAccessTokenForUser(userId);
+
+    const found: any[] = [];
+    const notFound: string[] = [];
+    const seenIds = new Set<string>();
+
+    const chunkSize = 5;
+    for (let i = 0; i < queries.length; i += chunkSize) {
+      const chunk = queries.slice(i, i + chunkSize);
+
+      await Promise.all(
+        chunk.map(async (rawQuery) => {
+          const cleaned = rawQuery.replace(/^(\d+[\.\)]|[-*•])\s*/, '').trim();
+          if (!cleaned) return;
+
+          try {
+            // Check if it's a Spotify link or URI
+            const spotifyUrlMatch = cleaned.match(/artist[/:]([a-zA-Z0-9]{22})/);
+            if (spotifyUrlMatch) {
+              const artistId = spotifyUrlMatch[1];
+              if (!seenIds.has(artistId)) {
+                const artist = await spotifyFetch<SpotifyArtistInfo>(token, `/artists/${artistId}`);
+                seenIds.add(artist.id);
+                found.push({
+                  id: artist.id,
+                  name: artist.name,
+                  imageUrl: artist.images[0]?.url || null,
+                  genres: artist.genres,
+                  popularity: artist.popularity,
+                  uri: artist.uri,
+                  externalUrl: artist.external_urls.spotify,
+                });
+                return;
+              }
+            }
+
+            // Search by name on Spotify
+            const searchData = await spotifyFetch<SpotifySearchResponse>(
+              token,
+              `/search?type=artist&q=${encodeURIComponent(cleaned)}&limit=1`
+            );
+
+            if (searchData.artists.items.length > 0) {
+              const artist = searchData.artists.items[0];
+              if (!seenIds.has(artist.id)) {
+                seenIds.add(artist.id);
+                found.push({
+                  id: artist.id,
+                  name: artist.name,
+                  imageUrl: artist.images[0]?.url || null,
+                  genres: artist.genres,
+                  popularity: artist.popularity,
+                  uri: artist.uri,
+                  externalUrl: artist.external_urls.spotify,
+                });
+              }
+            } else {
+              notFound.push(cleaned);
+            }
+          } catch {
+            notFound.push(cleaned);
+          }
+        })
+      );
+    }
+
+    return reply.send({ found, notFound });
+  });
+
+  // Randomize track, album, or single/EP
   app.post('/spotify/randomize', { preHandler: [authenticate] }, async (request, reply) => {
     const parsed = RandomizeRequestSchema.safeParse(request.body);
 

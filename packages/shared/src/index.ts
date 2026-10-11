@@ -97,3 +97,14 @@ export const HistoryItemSchema = z.object({
   createdAt: z.string(),
 });
 export type HistoryItem = z.infer<typeof HistoryItemSchema>;
+
+export const BatchSearchRequestSchema = z.object({
+  queries: z.array(z.string()).min(1, 'Please provide at least one artist name or link.').max(100, 'Maximum 100 artists per batch.'),
+});
+export type BatchSearchRequest = z.infer<typeof BatchSearchRequestSchema>;
+
+export const BatchSearchResponseSchema = z.object({
+  found: z.array(ArtistSchema),
+  notFound: z.array(z.string()),
+});
+export type BatchSearchResponse = z.infer<typeof BatchSearchResponseSchema>;

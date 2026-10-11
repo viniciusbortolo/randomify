@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Search, Plus, X, BookmarkPlus, Check, Sparkles, Loader2, Users } from 'lucide-react';
+import { Search, Plus, X, BookmarkPlus, Check, Sparkles, Loader2, Users, ClipboardPaste } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { PasteListModal } from './PasteListModal';
 import { CreatePresetSchema, type CreatePresetInput, type Artist, type Preset } from '@randomify/shared';
 
 interface ArtistSelectionProps {
@@ -27,6 +28,15 @@ export function ArtistSelection({
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSavingPreset, setIsSavingPreset] = useState(false);
+  const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
+
+  const handleAddBatchArtists = (newArtists: Artist[]) => {
+    const existingMap = new Map(selectedArtists.map((a) => [a.id, a]));
+    for (const artist of newArtists) {
+      existingMap.set(artist.id, artist);
+    }
+    onSelectMultiple(Array.from(existingMap.values()));
+  };
 
   // Fetch followed artists from Spotify
   const { data: followedArtists = [], isLoading: loadingFollowed } = useQuery<Artist[]>({
@@ -100,15 +110,25 @@ export function ArtistSelection({
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPasteModalOpen(true)}
+              className="gap-1.5 text-xs border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/40"
+            >
+              <ClipboardPaste className="h-3.5 w-3.5" />
+              Paste List
+            </Button>
+
             {selectedArtists.length > 0 && (
               <>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsSavingPreset(!isSavingPreset)}
-                  className="gap-1.5 text-xs text-emerald-400 hover:text-emerald-300"
+                  className="gap-1.5 text-xs text-zinc-300 hover:text-white"
                 >
-                  <BookmarkPlus className="h-3.5 w-3.5" />
+                  <BookmarkPlus className="h-3.5 w-3.5 text-emerald-400" />
                   Save as Preset
                 </Button>
                 <Button
@@ -386,6 +406,12 @@ export function ArtistSelection({
           )}
         </CardContent>
       </Card>
+      {/* Paste List Modal */}
+      <PasteListModal
+        isOpen={isPasteModalOpen}
+        onClose={() => setIsPasteModalOpen(false)}
+        onAddArtists={handleAddBatchArtists}
+      />
     </div>
   );
 }
