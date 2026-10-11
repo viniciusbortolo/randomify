@@ -12,16 +12,25 @@ interface SpotifyProfileResponse {
 
 export async function authRoutes(app: FastifyInstance) {
   // Redireciona o usuário para a página de permissão do Spotify
-  app.get('/auth/login', async (_request, reply) => {
-    const authUrl = getSpotifyAuthUrl();
+  app.get('/auth/login', async (request, reply) => {
+    const { redirect_to } = request.query as { redirect_to?: string };
+    const authUrl = getSpotifyAuthUrl(redirect_to);
     return reply.redirect(authUrl);
   });
 
   // Callback chamado pelo Spotify após o usuário aceitar
   app.get('/auth/callback', async (request, reply) => {
-    const { code, error } = request.query as { code?: string; error?: string };
+    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    let clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    if (state && (state.startsWith('http://') || state.startsWith('https://'))) {
+      try {
+        const parsed = new URL(state);
+        clientUrl = parsed.origin;
+      } catch {
+        // fallback to default clientUrl
+      }
+    }
 
     if (error || !code) {
       return reply.redirect(`${clientUrl}?auth_error=${encodeURIComponent(error || 'Authorization code not provided')}`);

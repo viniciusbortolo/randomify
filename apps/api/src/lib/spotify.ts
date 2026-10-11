@@ -4,7 +4,7 @@ const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '';
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
 const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3333/auth/callback';
 
-export function getSpotifyAuthUrl(): string {
+export function getSpotifyAuthUrl(state?: string): string {
   const scopes = [
     'user-read-private',
     'user-read-email',
@@ -18,6 +18,7 @@ export function getSpotifyAuthUrl(): string {
     redirect_uri: SPOTIFY_REDIRECT_URI,
     scope: scopes,
     show_dialog: 'true',
+    ...(state ? { state } : {}),
   });
 
   return `https://accounts.spotify.com/authorize?${params.toString()}`;

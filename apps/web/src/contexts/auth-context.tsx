@@ -64,7 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
-    window.location.href = `${apiUrl}/auth/login`;
+    const redirectOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    const redirectParam = redirectOrigin ? `?redirect_to=${encodeURIComponent(redirectOrigin)}` : '';
+    window.location.href = `${apiUrl}/auth/login${redirectParam}`;
   };
 
   const logout = async () => {
