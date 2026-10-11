@@ -34,7 +34,7 @@ export function RandomizerAction({
     },
     onSuccess: (data) => {
       onResult(data);
-      // Invalida histórico para atualizar a lista de recentes
+      // Invalidate history to refresh recent items
       queryClient.invalidateQueries({ queryKey: ['history'] });
     },
   });
@@ -47,20 +47,20 @@ export function RandomizerAction({
   }> = [
     {
       type: 'track',
-      label: 'Música',
-      description: 'Sorteia uma faixa aleatória',
+      label: 'Track',
+      description: 'Picks a random song',
       icon: Music2,
     },
     {
       type: 'album',
-      label: 'Álbum',
-      description: 'Sorteia um álbum completo',
+      label: 'Album',
+      description: 'Picks a full album',
       icon: Disc3,
     },
     {
       type: 'single',
       label: 'Single / EP',
-      description: 'Sorteia lançamentos curtos',
+      description: 'Picks singles and EPs',
       icon: Radio,
     },
   ];
@@ -69,7 +69,7 @@ export function RandomizerAction({
 
   return (
     <div className="space-y-4">
-      {/* Seletor de Tipo (Música / Álbum / Single) */}
+      {/* Type Selector (Track / Album / Single) */}
       <div className="grid grid-cols-3 gap-3">
         {options.map((option) => {
           const Icon = option.icon;
@@ -101,7 +101,7 @@ export function RandomizerAction({
         })}
       </div>
 
-      {/* Botão de Sortear */}
+      {/* Randomize Action Button */}
       <div className="pt-2 flex flex-col items-center">
         <Button
           variant="spotify"
@@ -113,12 +113,12 @@ export function RandomizerAction({
           {randomizeMutation.isPending ? (
             <>
               <Loader2 className="h-6 w-6 animate-spin text-black" />
-              Sorteando no Spotify...
+              Drawing from Spotify...
             </>
           ) : (
             <>
               <Dices className="h-6 w-6" />
-              SORTEAR {selectedType.toUpperCase()}!
+              SPIN {selectedType.toUpperCase()}!
             </>
           )}
         </Button>
@@ -126,7 +126,7 @@ export function RandomizerAction({
         {!hasArtists && (
           <p className="text-xs text-amber-400/90 mt-2 flex items-center gap-1.5">
             <AlertCircle className="h-3.5 w-3.5" />
-            Selecione pelo menos um artista acima para sortear.
+            Select at least one artist above to randomize.
           </p>
         )}
 

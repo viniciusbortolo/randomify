@@ -37,7 +37,7 @@ export function PresetsModal({ isOpen, onClose, onApplyPreset }: PresetsModalPro
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
             <Bookmark className="h-5 w-5 text-emerald-400" />
-            <h2 className="text-lg font-bold text-white">Meus Presets Salvos</h2>
+            <h2 className="text-lg font-bold text-white">My Saved Presets</h2>
           </div>
           <button
             onClick={onClose}
@@ -49,10 +49,10 @@ export function PresetsModal({ isOpen, onClose, onApplyPreset }: PresetsModalPro
 
         <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
           {isLoading ? (
-            <p className="text-center text-xs text-zinc-500 py-8">Carregando presets...</p>
+            <p className="text-center text-xs text-zinc-500 py-8">Loading presets...</p>
           ) : presets.length === 0 ? (
             <p className="text-center text-xs text-zinc-500 py-8">
-              Você ainda não salvou nenhum preset. Selecione artistas e clique em &ldquo;Salvar como Preset&rdquo;.
+              You haven&apos;t saved any presets yet. Select artists and click &ldquo;Save as Preset&rdquo;.
             </p>
           ) : (
             presets.map((preset) => {
@@ -72,7 +72,7 @@ export function PresetsModal({ isOpen, onClose, onApplyPreset }: PresetsModalPro
                       <h3 className="font-bold text-sm text-white">{preset.name}</h3>
                       <p className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
                         <Users className="h-3.5 w-3.5 text-emerald-400" />
-                        {artistsList.length} artistas
+                        {artistsList.length} artists
                       </p>
                     </div>
 
@@ -86,7 +86,7 @@ export function PresetsModal({ isOpen, onClose, onApplyPreset }: PresetsModalPro
                         className="gap-1.5 text-xs h-8"
                       >
                         <Play className="h-3.5 w-3.5 fill-black" />
-                        Carregar
+                        Load
                       </Button>
                       <Button
                         variant="ghost"
@@ -94,7 +94,7 @@ export function PresetsModal({ isOpen, onClose, onApplyPreset }: PresetsModalPro
                         onClick={() => deletePresetMutation.mutate(preset.id)}
                         disabled={deletePresetMutation.isPending}
                         className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                        title="Excluir preset"
+                        title="Delete preset"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

@@ -175,7 +175,7 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     if (!parsed.success) {
       return reply.status(400).send({
-        error: 'Requisição inválida',
+        error: 'Invalid request',
         details: parsed.error.flatten(),
       });
     }
@@ -238,7 +238,7 @@ export async function spotifyRoutes(app: FastifyInstance) {
         );
 
         if (!topTracksData.tracks || topTracksData.tracks.length === 0) {
-          return reply.status(404).send({ error: 'Nenhuma faixa encontrada para este artista.' });
+          return reply.status(404).send({ error: 'No tracks found for this artist.' });
         }
 
         const track = topTracksData.tracks[Math.floor(Math.random() * topTracksData.tracks.length)];
@@ -281,7 +281,7 @@ export async function spotifyRoutes(app: FastifyInstance) {
       const albums = await fetchArtistAlbums(token, selectedArtistId, 'album');
 
       if (albums.length === 0) {
-        return reply.status(404).send({ error: `Nenhum álbum completo encontrado para o artista ${selectedArtist.name}.` });
+        return reply.status(404).send({ error: `No full albums found for artist ${selectedArtist.name}.` });
       }
 
       const album = albums[Math.floor(Math.random() * albums.length)];
@@ -323,7 +323,7 @@ export async function spotifyRoutes(app: FastifyInstance) {
       const singles = await fetchArtistAlbums(token, selectedArtistId, 'single');
 
       if (singles.length === 0) {
-        return reply.status(404).send({ error: `Nenhum single/EP encontrado para o artista ${selectedArtist.name}.` });
+        return reply.status(404).send({ error: `No singles or EPs found for artist ${selectedArtist.name}.` });
       }
 
       const single = singles[Math.floor(Math.random() * singles.length)];
@@ -360,6 +360,6 @@ export async function spotifyRoutes(app: FastifyInstance) {
       });
     }
 
-    return reply.status(400).send({ error: 'Tipo de sorteio não suportado.' });
+    return reply.status(400).send({ error: 'Unsupported randomize type.' });
   });
 }

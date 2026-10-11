@@ -4,8 +4,8 @@ import { QueryProvider } from '@/providers/query-provider';
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
-  title: 'Randomify - Sorteador de Músicas do Spotify',
-  description: 'Selecione seus artistas favoritos e sorteie músicas, álbuns ou singles aleatórios do Spotify.',
+  title: 'Randomify - Spotify Music Randomizer',
+  description: 'Select your favorite artists and randomize songs, full albums, or singles from Spotify.',
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="dark" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-emerald-500 selection:text-black"
         suppressHydrationWarning

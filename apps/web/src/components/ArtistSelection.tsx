@@ -28,26 +28,26 @@ export function ArtistSelection({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSavingPreset, setIsSavingPreset] = useState(false);
 
-  // Buscar artistas que o usuário segue
+  // Fetch followed artists from Spotify
   const { data: followedArtists = [], isLoading: loadingFollowed } = useQuery<Artist[]>({
     queryKey: ['spotify', 'followed-artists'],
     queryFn: () => apiFetch<Artist[]>('/spotify/followed-artists'),
   });
 
-  // Buscar artistas por texto
+  // Search artists by name
   const { data: searchResults = [], isFetching: isSearching } = useQuery<Artist[]>({
     queryKey: ['spotify', 'search', searchQuery],
     queryFn: () => apiFetch<Artist[]>(`/spotify/search-artists?q=${encodeURIComponent(searchQuery)}`),
     enabled: searchQuery.trim().length > 1,
   });
 
-  // Buscar presets salvos
+  // Fetch saved presets
   const { data: presets = [] } = useQuery<Preset[]>({
     queryKey: ['presets'],
     queryFn: () => apiFetch<Preset[]>('/presets'),
   });
 
-  // Form para salvar preset com react-hook-form e zod
+  // Save preset form with react-hook-form and zod
   const {
     register,
     handleSubmit,
@@ -61,7 +61,7 @@ export function ArtistSelection({
     },
   });
 
-  // Mutação para criar preset
+  // Mutation to create preset
   const createPresetMutation = useMutation({
     mutationFn: (data: CreatePresetInput) =>
       apiFetch('/presets', {
@@ -86,16 +86,16 @@ export function ArtistSelection({
 
   return (
     <div className="space-y-6">
-      {/* Barra de Artistas Selecionados */}
+      {/* Selected Artists Bar */}
       <Card className="border-emerald-500/20 bg-zinc-900/80">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-emerald-400" />
-              Artistas Selecionados ({selectedArtists.length})
+              Selected Artists ({selectedArtists.length})
             </CardTitle>
             <p className="text-xs text-zinc-400 mt-1">
-              O sorteio vai escolher aleatoriamente entre estes artistas
+              Randomization will pick from these selected artists
             </p>
           </div>
 
@@ -109,7 +109,7 @@ export function ArtistSelection({
                   className="gap-1.5 text-xs text-emerald-400 hover:text-emerald-300"
                 >
                   <BookmarkPlus className="h-3.5 w-3.5" />
-                  Salvar como Preset
+                  Save as Preset
                 </Button>
                 <Button
                   variant="ghost"
@@ -117,7 +117,7 @@ export function ArtistSelection({
                   onClick={onClearSelected}
                   className="text-xs text-zinc-400 hover:text-red-400"
                 >
-                  Limpar
+                  Clear
                 </Button>
               </>
             )}
@@ -125,7 +125,7 @@ export function ArtistSelection({
         </CardHeader>
 
         <CardContent>
-          {/* Form inline de Salvar Preset */}
+          {/* Inline Save Preset Form */}
           {isSavingPreset && (
             <form
               onSubmit={handleSubmit(onSavePresetSubmit)}
@@ -134,7 +134,7 @@ export function ArtistSelection({
               <div className="flex-1 w-full">
                 <Input
                   {...register('name')}
-                  placeholder="Nome do preset (ex: Meus Favoritos, Indie Rock)"
+                  placeholder="Preset name (e.g. Classic Rock, Indie Favorites)"
                   className="h-9 text-xs"
                 />
                 {errors.name && (
@@ -151,7 +151,7 @@ export function ArtistSelection({
                   {createPresetMutation.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    'Salvar'
+                    'Save'
                   )}
                 </Button>
                 <Button
@@ -161,16 +161,16 @@ export function ArtistSelection({
                   onClick={() => setIsSavingPreset(false)}
                   className="text-xs h-9"
                 >
-                  Cancelar
+                  Cancel
                 </Button>
               </div>
             </form>
           )}
 
-          {/* Chips dos artistas selecionados */}
+          {/* Selected artists chips */}
           {selectedArtists.length === 0 ? (
             <div className="py-6 text-center text-sm text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-              Nenhum artista selecionado ainda. Busque ou selecione abaixo!
+              No artists selected yet. Search or pick from below!
             </div>
           ) : (
             <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
@@ -195,7 +195,7 @@ export function ArtistSelection({
                   <button
                     onClick={() => onToggleArtist(artist)}
                     className="text-emerald-400 group-hover:text-red-400 transition-colors ml-0.5"
-                    title="Remover"
+                    title="Remove"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -206,10 +206,10 @@ export function ArtistSelection({
         </CardContent>
       </Card>
 
-      {/* Carregar Preset Rápido */}
+      {/* Quick Preset Selector */}
       {presets.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="text-zinc-500 font-medium whitespace-nowrap">Presets rápidos:</span>
+          <span className="text-zinc-500 font-medium whitespace-nowrap">Quick presets:</span>
           {presets.map((p) => (
             <button
               key={p.id}
@@ -231,13 +231,13 @@ export function ArtistSelection({
         </div>
       )}
 
-      {/* Campo de Busca de Artistas */}
+      {/* Artist Search Input */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar artista por nome no catálogo do Spotify..."
+          placeholder="Search artist by name in Spotify catalog..."
           className="pl-11 pr-10 h-11 bg-zinc-900/90 text-sm"
         />
         {isSearching && (
@@ -245,15 +245,15 @@ export function ArtistSelection({
         )}
       </div>
 
-      {/* Resultados da busca */}
+      {/* Search results */}
       {searchQuery.trim().length > 1 && (
         <Card className="border-zinc-800 bg-zinc-900/90">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-400">Resultados da Busca</CardTitle>
+            <CardTitle className="text-sm text-zinc-400">Search Results</CardTitle>
           </CardHeader>
           <CardContent>
             {searchResults.length === 0 && !isSearching ? (
-              <p className="text-xs text-zinc-500 py-2">Nenhum artista encontrado para &ldquo;{searchQuery}&rdquo;</p>
+              <p className="text-xs text-zinc-500 py-2">No artists found for &ldquo;{searchQuery}&rdquo;</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto">
                 {searchResults.map((artist) => {
@@ -299,15 +299,15 @@ export function ArtistSelection({
         </Card>
       )}
 
-      {/* Artistas Seguidos no Spotify */}
+      {/* Followed Artists on Spotify */}
       <Card className="border-zinc-800 bg-zinc-900/60">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-base text-zinc-200">
-              Artistas que você segue no Spotify
+              Artists you follow on Spotify
             </CardTitle>
             <p className="text-xs text-zinc-400">
-              Clique para selecionar ou desmarcar da lista de sorteio
+              Click to select or deselect from the randomize pool
             </p>
           </div>
 
@@ -326,8 +326,8 @@ export function ArtistSelection({
               className="text-xs"
             >
               {followedArtists.every((a) => isSelected(a.id))
-                ? 'Desmarcar todos'
-                : 'Selecionar todos'}
+                ? 'Deselect all'
+                : 'Select all'}
             </Button>
           )}
         </CardHeader>
@@ -341,7 +341,7 @@ export function ArtistSelection({
             </div>
           ) : followedArtists.length === 0 ? (
             <div className="py-6 text-center text-xs text-zinc-500">
-              Nenhum artista seguido encontrado na sua conta do Spotify. Use a busca acima para adicionar qualquer artista!
+              No followed artists found on your Spotify account. Use the search above to add any artist!
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-72 overflow-y-auto pr-1">

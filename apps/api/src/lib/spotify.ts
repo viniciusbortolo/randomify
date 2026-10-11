@@ -43,7 +43,7 @@ export async function exchangeCodeForTokens(code: string) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Falha ao obter tokens do Spotify: ${errorText}`);
+    throw new Error(`Failed to retrieve Spotify tokens: ${errorText}`);
   }
 
   const data = (await response.json()) as {
@@ -79,7 +79,7 @@ export async function refreshUserAccessToken(userId: string, refreshToken: strin
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Falha ao atualizar token do Spotify: ${errorText}`);
+    throw new Error(`Failed to refresh Spotify token: ${errorText}`);
   }
 
   const data = (await response.json()) as {
@@ -108,7 +108,7 @@ export async function getValidAccessTokenForUser(userId: string): Promise<string
   });
 
   if (!user) {
-    throw new Error('Usuário não encontrado');
+    throw new Error('User not found');
   }
 
   // Se o token expirar em menos de 5 minutos, atualiza

@@ -23,16 +23,19 @@ export function RandomizeResult({ result, onDrawAgain }: RandomizeResultProps) {
     ? `https://open.spotify.com/embed/track/${item.id}?utm_source=generator&theme=0`
     : `https://open.spotify.com/embed/album/${item.id}?utm_source=generator&theme=0`;
 
+  const badgeLabel =
+    type === 'track' ? 'Random Track' : type === 'album' ? 'Random Album' : 'Random Single / EP';
+
   return (
     <Card className="border-emerald-500/40 bg-zinc-900/90 shadow-2xl shadow-emerald-950/40 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
       <CardHeader className="bg-gradient-to-r from-emerald-950/40 to-zinc-900/80 border-b border-zinc-800/80 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Badge variant="default" className="uppercase font-bold tracking-wider text-[10px]">
-              {type === 'track' ? 'Música Sorteada' : type === 'album' ? 'Álbum Sorteado' : 'Single / EP Sorteado'}
+              {badgeLabel}
             </Badge>
             <span className="text-xs text-zinc-400">
-              do artista <strong className="text-emerald-400">{selectedArtist.name}</strong>
+              by <strong className="text-emerald-400">{selectedArtist.name}</strong>
             </span>
           </div>
 
@@ -43,7 +46,7 @@ export function RandomizeResult({ result, onDrawAgain }: RandomizeResultProps) {
             className="gap-1.5 text-xs h-8 border-emerald-500/30 text-emerald-300 hover:bg-emerald-950/30"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Sortear Outro
+            Spin Another
           </Button>
         </div>
 
@@ -58,26 +61,26 @@ export function RandomizeResult({ result, onDrawAgain }: RandomizeResultProps) {
       </CardHeader>
 
       <CardContent className="p-6 space-y-6">
-        {/* Metadados */}
+        {/* Metadata */}
         <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-400">
           {item.releaseDate && (
             <div className="flex items-center gap-1.5 bg-zinc-950/60 px-3 py-1.5 rounded-full border border-zinc-800">
               <Calendar className="h-3.5 w-3.5 text-emerald-400" />
-              Lançamento: {item.releaseDate}
+              Released: {item.releaseDate}
             </div>
           )}
 
           {album?.totalTracks && (
             <div className="flex items-center gap-1.5 bg-zinc-950/60 px-3 py-1.5 rounded-full border border-zinc-800">
               <Disc className="h-3.5 w-3.5 text-emerald-400" />
-              {album.totalTracks} faixas
+              {album.totalTracks} tracks
             </div>
           )}
 
           {track?.albumName && (
             <div className="flex items-center gap-1.5 bg-zinc-950/60 px-3 py-1.5 rounded-full border border-zinc-800">
               <Disc className="h-3.5 w-3.5 text-emerald-400" />
-              Álbum: {track.albumName}
+              Album: {track.albumName}
             </div>
           )}
 
@@ -87,12 +90,12 @@ export function RandomizeResult({ result, onDrawAgain }: RandomizeResultProps) {
             rel="noopener noreferrer"
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-[#1DB954] hover:underline"
           >
-            Abrir no app do Spotify
+            Open in Spotify app
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </div>
 
-        {/* Player Embed oficial do Spotify */}
+        {/* Official Spotify Embed Player */}
         <div className="rounded-xl overflow-hidden shadow-2xl bg-black border border-zinc-800">
           <iframe
             src={embedUrl}

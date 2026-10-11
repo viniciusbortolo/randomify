@@ -9,7 +9,7 @@ import { RandomizeResult } from '@/components/RandomizeResult';
 import { HistoryModal } from '@/components/HistoryModal';
 import { PresetsModal } from '@/components/PresetsModal';
 import { Button } from '@/components/ui/button';
-import { Dices, Music2, Disc3, Radio, Sparkles, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { Dices, Music2, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import type { Artist, RandomizeType, RandomizeResponse } from '@randomify/shared';
 
 export default function Home() {
@@ -22,7 +22,7 @@ export default function Home() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
 
-  // Toggle artista individual
+  // Toggle individual artist
   const handleToggleArtist = (artist: Artist) => {
     setSelectedArtists((prev) => {
       const exists = prev.some((a) => a.id === artist.id);
@@ -33,12 +33,12 @@ export default function Home() {
     });
   };
 
-  // Limpar todos selecionados
+  // Clear all selected artists
   const handleClearSelected = () => {
     setSelectedArtists([]);
   };
 
-  // Selecionar múltiplos (ex: preset ou todos os seguidos)
+  // Select multiple artists (preset or select all followed)
   const handleSelectMultiple = (artists: Artist[]) => {
     setSelectedArtists(artists);
   };
@@ -69,23 +69,23 @@ export default function Home() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
             <div className="h-12 w-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-            <p className="text-sm text-zinc-400">Carregando seu Randomify...</p>
+            <p className="text-sm text-zinc-400">Loading Randomify...</p>
           </div>
         ) : !isAuthenticated ? (
-          /* Hero Section para visitantes não autenticados */
+          /* Hero Section for unauthenticated visitors */
           <div className="py-12 sm:py-20 flex flex-col items-center text-center space-y-8 animate-in fade-in duration-500">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-              <Sparkles className="h-3.5 w-3.5" />
-              Sorteios aleatórios conectados ao Spotify
+              <Dices className="h-3.5 w-3.5" />
+              Smart random music discovery connected to Spotify
             </div>
 
             <div className="space-y-4 max-w-2xl">
               <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-                Que tal uma música aleatória do seu artista preferido?
+                Looking for a random song from your favorite artist?
               </h1>
               <p className="text-base sm:text-lg text-zinc-400">
-                Escolha um ou vários artistas e deixe o Randomify sortear uma música surpresa,
-                um álbum completo ou um single/EP direto do catálogo do Spotify.
+                Choose one or multiple artists and let Randomify pick a surprise song,
+                a full studio album, or a single/EP directly from Spotify.
               </p>
             </div>
 
@@ -95,18 +95,18 @@ export default function Home() {
               onClick={login}
               className="h-14 px-8 text-base font-bold shadow-2xl shadow-[#1DB954]/30"
             >
-              Conectar com o Spotify para Começar
+              Connect with Spotify to Get Started
             </Button>
 
-            {/* Destaques de Funcionalidades */}
+            {/* Feature Highlights */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-12 w-full max-w-3xl text-left">
               <div className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-2">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
                   <Music2 className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Músicas & Álbuns</h3>
+                <h3 className="font-bold text-white text-sm">Tracks & Albums</h3>
                 <p className="text-xs text-zinc-400">
-                  Sorteie músicas isoladas, álbuns de estúdio inteiros ou lançamentos curtos (EPs/singles).
+                  Draw individual songs, full studio albums, or short releases (EPs/singles).
                 </p>
               </div>
 
@@ -114,9 +114,9 @@ export default function Home() {
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
                   <Dices className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Catálogo & Seguidos</h3>
+                <h3 className="font-bold text-white text-sm">Catalog & Followed</h3>
                 <p className="text-xs text-zinc-400">
-                  Acesse instantaneamente quem você já segue ou busque qualquer artista do mundo.
+                  Instantly access artists you follow on Spotify or search any artist worldwide.
                 </p>
               </div>
 
@@ -124,17 +124,17 @@ export default function Home() {
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Presets & Histórico</h3>
+                <h3 className="font-bold text-white text-sm">Presets & History</h3>
                 <p className="text-xs text-zinc-400">
-                  Salve grupos de artistas personalizados no banco PostgreSQL e consulte seus sorteios anteriores.
+                  Save custom artist groups in PostgreSQL and review past randomized draws anytime.
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          /* Aplicação Principal (Logado) */
+          /* Main Application (Logged in) */
           <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Seção de Sorteio */}
+            {/* Randomizer Control Section */}
             <div className="space-y-6">
               <RandomizerAction
                 selectedArtists={selectedArtists}
@@ -142,12 +142,12 @@ export default function Home() {
                 onSelectType={setSelectedType}
                 onResult={(result) => {
                   setDrawResult(result);
-                  // Rola suavemente até o resultado
+                  // Smoothly scroll up to the result
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
 
-              {/* Resultado do Sorteio */}
+              {/* Draw Result Card */}
               {drawResult && (
                 <RandomizeResult
                   result={drawResult}
@@ -159,7 +159,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Seção de Seleção de Artistas */}
+            {/* Artist Selection Section */}
             <div className="pt-4 border-t border-zinc-800/80">
               <ArtistSelection
                 selectedArtists={selectedArtists}
@@ -172,7 +172,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Modais de Histórico e Presets */}
+      {/* History and Presets Modals */}
       <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
       <PresetsModal
         isOpen={isPresetsOpen}

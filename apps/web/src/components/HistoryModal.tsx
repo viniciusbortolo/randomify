@@ -37,7 +37,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
             <HistoryIcon className="h-5 w-5 text-emerald-400" />
-            <h2 className="text-lg font-bold text-white">Histórico de Sorteios</h2>
+            <h2 className="text-lg font-bold text-white">Draw History</h2>
           </div>
           <div className="flex items-center gap-2">
             {history.length > 0 && (
@@ -49,7 +49,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                 className="text-xs text-zinc-400 hover:text-red-400 gap-1.5"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Limpar
+                Clear
               </Button>
             )}
             <button
@@ -63,9 +63,9 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
 
         <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
           {isLoading ? (
-            <p className="text-center text-xs text-zinc-500 py-8">Carregando histórico...</p>
+            <p className="text-center text-xs text-zinc-500 py-8">Loading history...</p>
           ) : history.length === 0 ? (
-            <p className="text-center text-xs text-zinc-500 py-8">Nenhum sorteio registrado ainda.</p>
+            <p className="text-center text-xs text-zinc-500 py-8">No draws recorded yet.</p>
           ) : (
             history.map((item) => (
               <div
@@ -86,7 +86,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                     <p className="font-bold text-zinc-100 truncate">{item.itemName}</p>
                     <p className="text-zinc-400 truncate">{item.artistNames.join(', ')}</p>
                     <span className="text-[10px] text-zinc-500">
-                      {new Date(item.createdAt).toLocaleString('pt-BR')}
+                      {new Date(item.createdAt).toLocaleString('en-US')}
                     </span>
                   </div>
                 </div>
@@ -100,7 +100,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 rounded-lg text-zinc-400 hover:text-[#1DB954] hover:bg-zinc-800 transition-colors"
-                    title="Abrir no Spotify"
+                    title="Open in Spotify"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>

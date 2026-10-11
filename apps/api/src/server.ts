@@ -63,7 +63,7 @@ const port = Number(process.env.PORT) || 3333;
 
 try {
   await app.listen({ port, host: '0.0.0.0' });
-  app.log.info(`🚀 Servidor Fastify rodando na porta ${port}`);
+  app.log.info(`🚀 Fastify server listening on port ${port}`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);

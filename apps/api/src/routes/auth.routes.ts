@@ -24,18 +24,18 @@ export async function authRoutes(app: FastifyInstance) {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 
     if (error || !code) {
-      return reply.redirect(`${clientUrl}?auth_error=${encodeURIComponent(error || 'Código de autorização não fornecido')}`);
+      return reply.redirect(`${clientUrl}?auth_error=${encodeURIComponent(error || 'Authorization code not provided')}`);
     }
 
     try {
       const tokens = await exchangeCodeForTokens(code);
 
-      // Busca o perfil do usuário no Spotify
+      // Fetch user profile from Spotify
       const profile = await spotifyFetch<SpotifyProfileResponse>(tokens.accessToken, '/me');
 
       const avatarUrl = profile.images && profile.images.length > 0 ? profile.images[0].url : null;
 
-      // Upsert do usuário no banco de dados via Prisma
+      // Upsert user in database via Prisma
       const user = await prisma.user.upsert({
         where: { spotifyId: profile.id },
         update: {
@@ -57,30 +57,30 @@ export async function authRoutes(app: FastifyInstance) {
         },
       });
 
-      // Gera o JWT
+      // Sign JWT
       const token = app.jwt.sign({
         id: user.id,
         spotifyId: user.spotifyId,
       });
 
-      // Seta cookie seguro
+      // Set secure cookie
       reply.setCookie('token', token, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60, // 7 dias
+        maxAge: 7 * 24 * 60 * 60, // 7 days
       });
 
-      // Redireciona de volta para o frontend com sucesso (passando token na query opcionalmente para localStorage)
+      // Redirect back to frontend
       return reply.redirect(`${clientUrl}?auth_token=${token}`);
     } catch (err: any) {
       request.log.error(err);
-      return reply.redirect(`${clientUrl}?auth_error=${encodeURIComponent(err.message || 'Falha na autenticação')}`);
+      return reply.redirect(`${clientUrl}?auth_error=${encodeURIComponent(err.message || 'Authentication failed')}`);
     }
   });
 
-  // Retorna os dados do usuário autenticado
+  // Return authenticated user profile
   app.get('/auth/me', { preHandler: [authenticate] }, async (request, reply) => {
     const userId = request.user!.id;
 
@@ -97,7 +97,7 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     if (!user) {
-      return reply.status(404).send({ error: 'Usuário não encontrado' });
+      return reply.status(404).send({ error: 'User not found' });
     }
 
     return reply.send(user);
@@ -106,6 +106,6 @@ export async function authRoutes(app: FastifyInstance) {
   // Logout
   app.post('/auth/logout', async (_request, reply) => {
     reply.clearCookie('token', { path: '/' });
-    return reply.send({ message: 'Desconectado com sucesso' });
+    return reply.send({ message: 'Logged out successfully' });
   });
 }

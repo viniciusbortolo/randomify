@@ -17,7 +17,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
   });
 
   if (!response.ok) {
-    let errorMessage = `Erro na requisição (${response.status})`;
+    let errorMessage = `Request failed (${response.status})`;
     try {
       const errorData = await response.json();
       errorMessage = errorData.error || errorData.message || errorMessage;

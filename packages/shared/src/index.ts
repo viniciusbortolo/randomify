@@ -24,7 +24,7 @@ export const RandomizeTypeSchema = z.enum(['track', 'album', 'single']);
 export type RandomizeType = z.infer<typeof RandomizeTypeSchema>;
 
 export const RandomizeRequestSchema = z.object({
-  artistIds: z.array(z.string()).min(1, 'Selecione pelo menos um artista para sortear.'),
+  artistIds: z.array(z.string()).min(1, 'Please select at least one artist to randomize.'),
   type: RandomizeTypeSchema,
 });
 export type RandomizeRequest = z.infer<typeof RandomizeRequestSchema>;
@@ -72,8 +72,8 @@ export const PresetArtistSchema = z.object({
 export type PresetArtist = z.infer<typeof PresetArtistSchema>;
 
 export const CreatePresetSchema = z.object({
-  name: z.string().min(1, 'Nome do preset é obrigatório.').max(50, 'Nome muito longo.'),
-  artists: z.array(PresetArtistSchema).min(1, 'Selecione ao menos um artista.'),
+  name: z.string().min(1, 'Preset name is required.').max(50, 'Preset name is too long.'),
+  artists: z.array(PresetArtistSchema).min(1, 'Please select at least one artist.'),
 });
 export type CreatePresetInput = z.infer<typeof CreatePresetSchema>;
 

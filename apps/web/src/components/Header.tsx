@@ -27,7 +27,7 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
               </span>
             </h1>
             <p className="text-xs text-zinc-400 hidden sm:block">
-              Sorteador de músicas, álbuns e singles
+              Spotify track, album, and single randomizer
             </p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
                 className="gap-2 text-zinc-300 hover:text-white"
               >
                 <Bookmark className="h-4 w-4" />
-                <span className="hidden sm:inline">Meus Presets</span>
+                <span className="hidden sm:inline">My Presets</span>
               </Button>
 
               <Button
@@ -52,7 +52,7 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
                 className="gap-2 text-zinc-300 hover:text-white"
               >
                 <History className="h-4 w-4" />
-                <span className="hidden sm:inline">Histórico</span>
+                <span className="hidden sm:inline">History</span>
               </Button>
             </>
           )}
@@ -82,7 +82,7 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
                 variant="ghost"
                 size="icon"
                 onClick={logout}
-                title="Sair"
+                title="Log out"
                 className="h-8 w-8 text-zinc-400 hover:text-red-400"
               >
                 <LogOut className="h-4 w-4" />
@@ -91,7 +91,7 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
           ) : (
             <Button variant="spotify" size="sm" onClick={login} className="gap-2">
               <LogIn className="h-4 w-4" />
-              Entrar com Spotify
+              Log in with Spotify
             </Button>
           )}
         </div>

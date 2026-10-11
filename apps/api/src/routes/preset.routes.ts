@@ -22,7 +22,7 @@ export async function presetRoutes(app: FastifyInstance) {
 
     if (!parsed.success) {
       return reply.status(400).send({
-        error: 'Dados inválidos para o preset',
+        error: 'Invalid preset data',
         details: parsed.error.flatten(),
       });
     }
@@ -41,7 +41,7 @@ export async function presetRoutes(app: FastifyInstance) {
     return reply.status(201).send(preset);
   });
 
-  // Deletar um preset
+  // Delete a preset
   app.delete('/presets/:id', { preHandler: [authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.user!.id;
@@ -51,13 +51,13 @@ export async function presetRoutes(app: FastifyInstance) {
     });
 
     if (!existing) {
-      return reply.status(404).send({ error: 'Preset não encontrado' });
+      return reply.status(404).send({ error: 'Preset not found' });
     }
 
     await prisma.preset.delete({
       where: { id },
     });
 
-    return reply.send({ message: 'Preset removido com sucesso' });
+    return reply.send({ message: 'Preset removed successfully' });
   });
 }

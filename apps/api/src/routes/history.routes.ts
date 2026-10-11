@@ -24,6 +24,6 @@ export async function historyRoutes(app: FastifyInstance) {
       where: { userId },
     });
 
-    return reply.send({ message: 'Histórico limpo com sucesso' });
+    return reply.send({ message: 'History cleared successfully' });
   });
 }

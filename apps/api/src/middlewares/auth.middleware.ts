@@ -19,12 +19,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     }
 
     if (!token) {
-      return reply.status(401).send({ error: 'Não autenticado' });
+      return reply.status(401).send({ error: 'Unauthorized' });
     }
 
     const decoded = request.server.jwt.verify<{ id: string; spotifyId: string }>(token);
     request.user = decoded;
   } catch (error) {
-    return reply.status(401).send({ error: 'Token inválido ou expirado' });
+    return reply.status(401).send({ error: 'Invalid or expired token' });
   }
 }
