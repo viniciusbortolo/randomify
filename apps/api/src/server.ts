@@ -50,13 +50,31 @@ app.addContentTypeParser(
 
 // CORS
 await app.register(cors, {
-  origin: [
-    process.env.CLIENT_URL || 'http://localhost:3000',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ],
+  origin: (origin, cb) => {
+    // Permite requisições sem header Origin (ex: server-to-server, curl)
+    if (!origin) {
+      return cb(null, true);
+    }
+
+    const clientUrl = process.env.CLIENT_URL;
+
+    // Permite requisições de localhost, qualquer deploy da Vercel (*.vercel.app) e CLIENT_URL
+    const isAllowed =
+      (clientUrl && origin === clientUrl) ||
+      origin.endsWith('.vercel.app') ||
+      /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+
+    if (isAllowed) {
+      return cb(null, true);
+    }
+
+    return cb(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie'],
 });
 
 // Cookies
