@@ -10,7 +10,13 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { PasteListModal } from './PasteListModal';
+import { z } from 'zod';
 import { CreatePresetSchema, type CreatePresetInput, type Artist, type Preset } from '@randomify/shared';
+
+const SavePresetFormSchema = z.object({
+  name: z.string().trim().min(1, 'Preset name is required.').max(50, 'Preset name is too long.'),
+});
+type SavePresetFormInput = z.infer<typeof SavePresetFormSchema>;
 
 interface ArtistSelectionProps {
   selectedArtists: Artist[];
@@ -100,11 +106,10 @@ export function ArtistSelection({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreatePresetInput>({
-    resolver: zodResolver(CreatePresetSchema),
+  } = useForm<SavePresetFormInput>({
+    resolver: zodResolver(SavePresetFormSchema),
     defaultValues: {
       name: '',
-      artists: [],
     },
   });
 
@@ -122,9 +127,10 @@ export function ArtistSelection({
     },
   });
 
-  const onSavePresetSubmit = (formData: { name: string }) => {
+  const onSavePresetSubmit = (formData: SavePresetFormInput) => {
+    if (selectedArtists.length === 0) return;
     createPresetMutation.mutate({
-      name: formData.name,
+      name: formData.name.trim(),
       artists: selectedArtists.map((a) => ({ id: a.id, name: a.name, imageUrl: a.imageUrl })),
     });
   };
@@ -193,9 +199,17 @@ export function ArtistSelection({
                   {...register('name')}
                   placeholder="Preset name (e.g. Classic Rock, Indie Favorites)"
                   className="h-9 text-xs"
+                  autoFocus
                 />
                 {errors.name && (
                   <p className="text-[11px] text-red-400 mt-1">{errors.name.message}</p>
+                )}
+                {createPresetMutation.isError && (
+                  <p className="text-[11px] text-red-400 mt-1">
+                    {createPresetMutation.error instanceof Error
+                      ? createPresetMutation.error.message
+                      : 'Failed to save preset.'}
+                  </p>
                 )}
               </div>
               <div className="flex gap-2">
