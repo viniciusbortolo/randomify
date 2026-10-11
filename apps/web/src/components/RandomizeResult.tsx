@@ -10,9 +10,10 @@ import type { RandomizeResponse } from '@randomify/shared';
 interface RandomizeResultProps {
   result: RandomizeResponse;
   onDrawAgain: () => void;
+  canSpinAgain?: boolean;
 }
 
-export function RandomizeResult({ result, onDrawAgain }: RandomizeResultProps) {
+export function RandomizeResult({ result, onDrawAgain, canSpinAgain = true }: RandomizeResultProps) {
   const { type, selectedArtist, track, album } = result;
 
   const item = track || album;
@@ -42,11 +43,12 @@ export function RandomizeResult({ result, onDrawAgain }: RandomizeResultProps) {
           <Button
             variant="outline"
             size="sm"
+            disabled={!canSpinAgain}
             onClick={onDrawAgain}
-            className="gap-1.5 text-xs h-8 border-emerald-500/30 text-emerald-300 hover:bg-emerald-950/30"
+            className="gap-1.5 text-xs h-8 border-emerald-500/30 text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-50 disabled:border-zinc-800 disabled:text-zinc-500"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Spin Another
+            {canSpinAgain ? 'Spin Another' : 'Limit Reached (0/3)'}
           </Button>
         </div>
 

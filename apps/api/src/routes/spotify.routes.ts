@@ -2,7 +2,12 @@ import { FastifyInstance } from 'fastify';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { getValidAccessTokenForUser, spotifyFetch } from '../lib/spotify.js';
 import { prisma } from '../lib/prisma.js';
-import { RandomizeRequestSchema, BatchSearchRequestSchema } from '@randomify/shared';
+import {
+  RandomizeRequestSchema,
+  BatchSearchRequestSchema,
+  DAILY_SPIN_LIMIT,
+  SpinLimitsResponse,
+} from '@randomify/shared';
 
 interface SpotifyFollowedResponse {
   artists: {
@@ -117,6 +122,61 @@ async function fetchArtistAlbums(
   }
 
   return items;
+}
+
+function getUtcDayBounds(): { startOfDay: Date; endOfDay: Date } {
+  const now = new Date();
+  const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+  return { startOfDay, endOfDay };
+}
+
+async function getUserSpinLimits(userId: string): Promise<SpinLimitsResponse> {
+  const { startOfDay, endOfDay } = getUtcDayBounds();
+
+  const spinRecords = await prisma.spinUsage.findMany({
+    where: {
+      userId,
+      createdAt: {
+        gte: startOfDay,
+        lt: endOfDay,
+      },
+    },
+    select: {
+      type: true,
+    },
+  });
+
+  const counts: Record<string, number> = {
+    track: 0,
+    album: 0,
+    single: 0,
+  };
+
+  for (const record of spinRecords) {
+    if (counts[record.type] !== undefined) {
+      counts[record.type]++;
+    }
+  }
+
+  return {
+    track: {
+      used: counts.track,
+      limit: DAILY_SPIN_LIMIT,
+      remaining: Math.max(0, DAILY_SPIN_LIMIT - counts.track),
+    },
+    album: {
+      used: counts.album,
+      limit: DAILY_SPIN_LIMIT,
+      remaining: Math.max(0, DAILY_SPIN_LIMIT - counts.album),
+    },
+    single: {
+      used: counts.single,
+      limit: DAILY_SPIN_LIMIT,
+      remaining: Math.max(0, DAILY_SPIN_LIMIT - counts.single),
+    },
+    resetsAt: endOfDay.toISOString(),
+  };
 }
 
 export async function spotifyRoutes(app: FastifyInstance) {
@@ -262,6 +322,13 @@ export async function spotifyRoutes(app: FastifyInstance) {
     return reply.send({ items, found, notFound });
   });
 
+  // Consultar limites diários de sorteios
+  app.get('/spotify/spin-limits', { preHandler: [authenticate] }, async (request, reply) => {
+    const userId = request.user!.id;
+    const spinLimits = await getUserSpinLimits(userId);
+    return reply.send(spinLimits);
+  });
+
   // Randomize track, album, or single/EP
   app.post('/spotify/randomize', { preHandler: [authenticate] }, async (request, reply) => {
     const parsed = RandomizeRequestSchema.safeParse(request.body);
@@ -275,6 +342,19 @@ export async function spotifyRoutes(app: FastifyInstance) {
 
     const { artistIds, type } = parsed.data;
     const userId = request.user!.id;
+
+    // Verificar limite diário de sorteios para a categoria (máximo 3 por categoria por dia)
+    const currentLimits = await getUserSpinLimits(userId);
+    const categoryLimit = currentLimits[type];
+
+    if (categoryLimit.remaining <= 0) {
+      const categoryLabel = type === 'single' ? 'single / EP' : type;
+      return reply.status(429).send({
+        error: `Daily limit reached for ${categoryLabel}. You can spin up to ${DAILY_SPIN_LIMIT} times per day.`,
+        spinLimits: currentLimits,
+      });
+    }
+
     const token = await getValidAccessTokenForUser(userId);
 
     // 1. Escolhe um artista aleatoriamente da lista fornecida
@@ -362,10 +442,28 @@ export async function spotifyRoutes(app: FastifyInstance) {
         },
       });
 
+      // Registra o uso do limite diário
+      await prisma.spinUsage.create({
+        data: {
+          userId,
+          type: 'track',
+        },
+      });
+
+      const updatedLimits: SpinLimitsResponse = {
+        ...currentLimits,
+        track: {
+          ...currentLimits.track,
+          used: currentLimits.track.used + 1,
+          remaining: Math.max(0, currentLimits.track.remaining - 1),
+        },
+      };
+
       return reply.send({
         type: 'track',
         selectedArtist,
         track: chosenTrack,
+        spinLimits: updatedLimits,
       });
     }
 
@@ -404,10 +502,28 @@ export async function spotifyRoutes(app: FastifyInstance) {
         },
       });
 
+      // Registra o uso do limite diário
+      await prisma.spinUsage.create({
+        data: {
+          userId,
+          type: 'album',
+        },
+      });
+
+      const updatedLimits: SpinLimitsResponse = {
+        ...currentLimits,
+        album: {
+          ...currentLimits.album,
+          used: currentLimits.album.used + 1,
+          remaining: Math.max(0, currentLimits.album.remaining - 1),
+        },
+      };
+
       return reply.send({
         type: 'album',
         selectedArtist,
         album: chosenAlbum,
+        spinLimits: updatedLimits,
       });
     }
 
@@ -446,10 +562,28 @@ export async function spotifyRoutes(app: FastifyInstance) {
         },
       });
 
+      // Registra o uso do limite diário
+      await prisma.spinUsage.create({
+        data: {
+          userId,
+          type: 'single',
+        },
+      });
+
+      const updatedLimits: SpinLimitsResponse = {
+        ...currentLimits,
+        single: {
+          ...currentLimits.single,
+          used: currentLimits.single.used + 1,
+          remaining: Math.max(0, currentLimits.single.remaining - 1),
+        },
+      };
+
       return reply.send({
         type: 'single',
         selectedArtist,
         album: chosenSingle,
+        spinLimits: updatedLimits,
       });
     }
 

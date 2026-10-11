@@ -21,6 +21,7 @@ model User {
 
   presets        Preset[]
   histories      DrawHistory[]
+  spins          SpinUsage[]
 }
 
 model Preset {
@@ -44,4 +45,14 @@ model DrawHistory {
   artistNames String[]
   imageUrl    String?
   createdAt   DateTime @default(now())
+}
+
+model SpinUsage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // 'track' | 'album' | 'single'
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, createdAt])
 }

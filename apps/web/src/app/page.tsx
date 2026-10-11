@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth-context';
+import { apiFetch } from '@/lib/api';
 import { Header } from '@/components/Header';
 import { ArtistSelection } from '@/components/ArtistSelection';
 import { RandomizerAction } from '@/components/RandomizerAction';
@@ -10,7 +12,7 @@ import { HistoryModal } from '@/components/HistoryModal';
 import { PresetsModal } from '@/components/PresetsModal';
 import { Button } from '@/components/ui/button';
 import { Dices, Music2, CheckCircle2, AlertCircle, X } from 'lucide-react';
-import type { Artist, RandomizeType, RandomizeResponse } from '@randomify/shared';
+import type { Artist, RandomizeType, RandomizeResponse, SpinLimitsResponse } from '@randomify/shared';
 
 export default function Home() {
   const { isAuthenticated, isLoading, login, authError, clearAuthError } = useAuth();
@@ -21,6 +23,12 @@ export default function Home() {
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
+
+  const { data: spinLimits } = useQuery<SpinLimitsResponse>({
+    queryKey: ['spin-limits'],
+    queryFn: () => apiFetch<SpinLimitsResponse>('/spotify/spin-limits'),
+    enabled: isAuthenticated,
+  });
 
   // Toggle individual artist
   const handleToggleArtist = (artist: Artist) => {
@@ -151,9 +159,18 @@ export default function Home() {
               {drawResult && (
                 <RandomizeResult
                   result={drawResult}
+                  canSpinAgain={
+                    selectedArtists.length > 0 &&
+                    (spinLimits ? spinLimits[drawResult.type].remaining > 0 : true)
+                  }
                   onDrawAgain={() => {
-                    const actionBtn = document.querySelector('button[type="button"]') as HTMLElement;
-                    actionBtn?.click();
+                    if (selectedType !== drawResult.type) {
+                      setSelectedType(drawResult.type);
+                    }
+                    setTimeout(() => {
+                      const spinBtn = document.getElementById('spin-action-button') as HTMLElement;
+                      spinBtn?.click();
+                    }, 50);
                   }}
                 />
               )}

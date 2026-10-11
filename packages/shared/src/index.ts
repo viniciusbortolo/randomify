@@ -56,11 +56,29 @@ export const AlbumResultSchema = z.object({
 });
 export type AlbumResult = z.infer<typeof AlbumResultSchema>;
 
+export const DAILY_SPIN_LIMIT = 3;
+
+export const SpinCategoryLimitSchema = z.object({
+  used: z.number(),
+  limit: z.number(),
+  remaining: z.number(),
+});
+export type SpinCategoryLimit = z.infer<typeof SpinCategoryLimitSchema>;
+
+export const SpinLimitsResponseSchema = z.object({
+  track: SpinCategoryLimitSchema,
+  album: SpinCategoryLimitSchema,
+  single: SpinCategoryLimitSchema,
+  resetsAt: z.string(),
+});
+export type SpinLimitsResponse = z.infer<typeof SpinLimitsResponseSchema>;
+
 export const RandomizeResponseSchema = z.object({
   type: RandomizeTypeSchema,
   selectedArtist: ArtistSchema,
   track: TrackResultSchema.optional(),
   album: AlbumResultSchema.optional(),
+  spinLimits: SpinLimitsResponseSchema.optional(),
 });
 export type RandomizeResponse = z.infer<typeof RandomizeResponseSchema>;
 
