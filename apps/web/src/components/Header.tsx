@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
-  const { user, isAuthenticated, login, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoggingIn, login, logout, isLoading } = useAuth();
   const { locale, toggleLocale, t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -159,27 +159,37 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
                 variant="spotify"
                 size="sm"
                 onClick={login}
+                disabled={isLoggingIn}
                 className="h-9 px-4 gap-2 text-sm"
                 suppressHydrationWarning
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width={16}
-                  height={16}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-log-in h-4 w-4 shrink-0"
-                  suppressHydrationWarning
-                >
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                  <polyline points="10 17 15 12 10 7" />
-                  <line x1="15" x2="3" y1="12" y2="12" />
-                </svg>
-                <span>{t.header.login}</span>
+                {isLoggingIn ? (
+                  <>
+                    <div className="h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin shrink-0" />
+                    <span>{locale === 'pt-BR' ? 'Conectando...' : 'Connecting...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={16}
+                      height={16}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-log-in h-4 w-4 shrink-0"
+                      suppressHydrationWarning
+                    >
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" x2="3" y1="12" y2="12" />
+                    </svg>
+                    <span>{t.header.login}</span>
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -229,26 +239,31 @@ export function Header({ onOpenHistory, onOpenPresets }: HeaderProps) {
                   variant="spotify"
                   size="sm"
                   onClick={login}
+                  disabled={isLoggingIn}
                   className="h-8 px-2.5 text-xs gap-1.5 font-bold"
                   suppressHydrationWarning
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={14}
-                    height={14}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-log-in h-3.5 w-3.5 shrink-0"
-                    suppressHydrationWarning
-                  >
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" x2="3" y1="12" y2="12" />
-                  </svg>
+                  {isLoggingIn ? (
+                    <div className="h-3.5 w-3.5 rounded-full border-2 border-black border-t-transparent animate-spin shrink-0" />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={14}
+                      height={14}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-log-in h-3.5 w-3.5 shrink-0"
+                      suppressHydrationWarning
+                    >
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" x2="3" y1="12" y2="12" />
+                    </svg>
+                  )}
                   <span>{locale === 'pt-BR' ? 'Entrar' : 'Log in'}</span>
                 </Button>
 

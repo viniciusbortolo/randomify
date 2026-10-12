@@ -7,10 +7,11 @@ import type { User } from '@randomify/shared';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isLoggingIn: boolean;
   isAuthenticated: boolean;
   authError: string | null;
   clearAuthError: () => void;
-  login: () => void;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
   refetchUser: () => Promise<void>;
 }
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   const fetchCurrentUser = async () => {
@@ -109,11 +111,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const login = () => {
+  const login = async () => {
+    setIsLoggingIn(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
     const redirectOrigin = typeof window !== 'undefined' ? window.location.origin : '';
     const redirectParam = redirectOrigin ? `?redirect_to=${encodeURIComponent(redirectOrigin)}` : '';
-    window.location.href = `${apiUrl}/auth/login${redirectParam}`;
+    const targetUrl = `${apiUrl}/auth/login${redirectParam}`;
+
+    // Tenta primeiro acordar o backend via /health em background antes de redirecionar a aba inteira.
+    // Isso evita que o Render exiba a tela preta "SERVICE WAKING UP... APPLICATION LOADING" para o usuário.
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      await fetch(`${apiUrl}/health`, { signal: controller.signal, mode: 'no-cors' });
+      clearTimeout(timeoutId);
+    } catch {
+      // Mesmo com timeout ou falha de rede, prossegue com o redirecionamento
+    }
+
+    window.location.href = targetUrl;
   };
 
   const logout = async () => {
@@ -137,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isLoading,
+        isLoggingIn,
         isAuthenticated: !!user,
         authError,
         clearAuthError,

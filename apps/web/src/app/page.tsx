@@ -16,8 +16,8 @@ import { Dices, Music2, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import type { Artist, RandomizeType, RandomizeResponse, SpinLimitsResponse } from '@randomify/shared';
 
 export default function Home() {
-  const { isAuthenticated, isLoading, login, authError, clearAuthError } = useAuth();
-  const { t } = useLanguage();
+  const { isAuthenticated, isLoading, isLoggingIn, login, authError, clearAuthError } = useAuth();
+  const { locale, t } = useLanguage();
 
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
   const [selectedType, setSelectedType] = useState<RandomizeType>('track');
@@ -102,9 +102,17 @@ export default function Home() {
               variant="spotify"
               size="lg"
               onClick={login}
-              className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold shadow-2xl shadow-[#1DB954]/30 w-full sm:w-auto"
+              disabled={isLoggingIn}
+              className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold shadow-2xl shadow-[#1DB954]/30 w-full sm:w-auto gap-2"
             >
-              {t.hero.connectButton}
+              {isLoggingIn ? (
+                <>
+                  <div className="h-5 w-5 rounded-full border-2 border-black border-t-transparent animate-spin shrink-0" />
+                  <span>{locale === 'pt-BR' ? 'Conectando ao Spotify...' : 'Connecting to Spotify...'}</span>
+                </>
+              ) : (
+                t.hero.connectButton
+              )}
             </Button>
 
             {/* Feature Highlights */}

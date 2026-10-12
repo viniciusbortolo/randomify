@@ -28,7 +28,7 @@ export function MobileSidebar({
   onOpenHistory,
   onOpenPresets,
 }: MobileSidebarProps) {
-  const { user, isAuthenticated, login, logout } = useAuth();
+  const { user, isAuthenticated, isLoggingIn, login, logout } = useAuth();
   const { locale, setLocale, t } = useLanguage();
 
   // Fecha o menu ao pressionar a tecla Escape e trava o scroll do body
@@ -150,13 +150,22 @@ export function MobileSidebar({
                 variant="spotify"
                 size="sm"
                 onClick={() => {
-                  onClose();
                   login();
                 }}
+                disabled={isLoggingIn}
                 className="w-full h-10 gap-2 text-xs font-bold shadow-md shadow-[#1DB954]/20"
               >
-                <LogIn className="h-4 w-4 shrink-0" />
-                <span>{t.header.login}</span>
+                {isLoggingIn ? (
+                  <>
+                    <div className="h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin shrink-0" />
+                    <span>{locale === 'pt-BR' ? 'Conectando ao Spotify...' : 'Connecting to Spotify...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4 shrink-0" />
+                    <span>{t.header.login}</span>
+                  </>
+                )}
               </Button>
             </div>
           )}
