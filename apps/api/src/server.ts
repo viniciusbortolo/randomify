@@ -73,8 +73,9 @@ await app.register(cors, {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'x-timezone'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'x-timezone', 'Accept-Language'],
   exposedHeaders: ['Set-Cookie'],
+  maxAge: 86400,
 });
 
 // Cookies

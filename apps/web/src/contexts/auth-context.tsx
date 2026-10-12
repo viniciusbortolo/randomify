@@ -23,8 +23,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const fetchCurrentUser = async () => {
+    const currentToken = typeof window !== 'undefined' ? localStorage.getItem('randomify_token') : null;
+    if (!currentToken) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const data = await apiFetch<User>('/auth/me');
+      const data = await apiFetch<User>('/auth/me', { timeout: 12000 });
       setUser(data);
     } catch {
       setUser(null);
@@ -62,10 +69,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.history.replaceState({}, '', `${window.location.pathname}${newQuery}`);
     }
 
+    const currentToken = token || localStorage.getItem('randomify_token');
+
+    // Se NÃO houver token salvo nem vindo na URL, o usuário NÃO está autenticado.
+    // Carrega instantaneamente sem bloquear a página com requisição a /auth/me
+    if (!currentToken) {
+      setIsLoading(false);
+      setUser(null);
+
+      // Pre-aquecer o servidor silenciosamente em segundo plano (sem travar a interface)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+      try {
+        fetch(`${apiUrl}/health`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
     let isMounted = true;
     void (async () => {
       try {
-        const data = await apiFetch<User>('/auth/me');
+        const data = await apiFetch<User>('/auth/me', { timeout: 12000 });
         if (isMounted) setUser(data);
       } catch {
         if (isMounted) {
@@ -93,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await apiFetch('/auth/logout', { method: 'POST' });
+      await apiFetch('/auth/logout', { method: 'POST', timeout: 5000 });
     } catch {
       // Ignora erro de rede no logout
     }
